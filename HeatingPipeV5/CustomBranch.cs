@@ -72,12 +72,31 @@ namespace HeatingPipeV5
         {
             ElementId nextElement = null;
             CustomElement customElement = new CustomElement(document, airterminal);
+            Elements.Add(customElement);
+            var nextsupplyelement = customElement.SupplyConnector.NextOwnerId;
+            var nextreturnelement = customElement.ReturnConnector.NextOwnerId;
+           
+            CustomElement customElementSup = new CustomElement(document, nextsupplyelement);
+            do
+            {
+                Elements.Add(customElementSup);
+                nextElement = customElementSup.NextElementId;
+
+                customElementSup = new CustomElement(document, nextElement);
+            }
+            while (nextElement != null);
+
+
+
+            CustomElement customElementRet = new CustomElement(document, nextreturnelement);
+            
             do
             {
 
-                Elements.Add(customElement);
-                nextElement = customElement.NextElementId;
-                customElement = new CustomElement(document, nextElement);
+                Elements.Add(customElementRet);
+                nextElement = customElementRet.NextElementId;
+
+                customElementRet = new CustomElement(document, nextElement);
             }
             while (nextElement != null);
 

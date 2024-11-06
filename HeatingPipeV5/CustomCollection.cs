@@ -30,8 +30,9 @@ namespace HeatingPipeV5
         public void CreateBranch(Document document, ElementId airterminal)
         {
             CustomBranch customBranch = new CustomBranch(Document, airterminal);
+
             customBranch.CreateNewBranch(Document, airterminal);
-            //CustomElement customElement = new CustomElement(Document,  airterminal);
+            CustomElement customElement = new CustomElement(Document,  airterminal);
             Collection.Add(customBranch);
 
 
@@ -80,7 +81,7 @@ namespace HeatingPipeV5
                 foreach (var element in branch.Elements)
                 {
 
-                    if (element.DetailType == CustomElement.Detail.AirTerminal)
+                    if (element.DetailType == CustomElement.Detail.Equipment)
                     {
                         if (element.ElementId.IntegerValue == 5807241)
                         {

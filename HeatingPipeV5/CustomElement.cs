@@ -9,6 +9,8 @@ using System.Runtime.Remoting.Contexts;
 
 using Autodesk.Revit.Creation;
 using System.Text.RegularExpressions;
+using Autodesk.Revit.DB.Plumbing;
+using System.Windows.Documents;
 
 namespace HeatingPipeV5
 {
@@ -23,9 +25,11 @@ namespace HeatingPipeV5
         public string SystemName { get; set; }
         public string ShortSystemName { get; set; }
         public string Lvl { get; set; }
-        public DuctSystemType SystemType { get; set; }
+        public PipeSystemType SystemType { get; set; }
 
         public CustomConnector SelectedConnector { get; set; }
+        public CustomConnector SupplyConnector { get; set; }
+        public CustomConnector ReturnConnector { get; set; }
         public List<CustomConnector> SecondaryConnectors { get; set; }
 
         public ConnectorSet OwnConnectors { get; set; }
@@ -44,61 +48,26 @@ namespace HeatingPipeV5
         public double Ptot { get; set; }
         public enum Detail
         {
-            RectangularDuct,
-            RoundDuct,
+            
             Tee,
             Elbow,
             Silencer,
             FireProtectValve,
-            AirTerminal,
+            Equipment,
             Drossel,
             Cap,
             TapAdjustable,
-
-            RoundElbow,
-            RectElbow,
-
-
             Transition,
-            RectTransition,
-            RectExpansion,
-            RectContraction,
             RoundTransition,
-
-
-            RoundExpansion,
-            RoundContraction,
-            RectRoundExpansion,
-            RoundRectExpansion,
-            RectRoundContraction,
-            RoundRectContraction,
-
-
-
-            RoundTeeBranch,
-            RoundTeeStraight,
-            RectTeeBranch,
-            RectTeeStraight,
-            RectRoundTeeBranch,
-            RectRoundTeeStraight,
-
-
             RoundFlexDuct,
             RectFlexDuct,
-
-            RoundInRoundDuctInsertStraight,
-            RoundInRoundDuctInsertBranch,
-            RoundInRectDuctInsertStraight,
-            RoundInRectDuctInsertBranch,
-            RectInRectDuctInsertStraight,
-            RectInRectDuctInsertBranch,
-            RectInRoundDuctInsertStraight,
-            RectInRoundDuctInsertBranch,
-
             AirTerminalConnection,
             Union,
             Pipe,
-            Valve
+            FlexPipe,
+            Valve,
+            Manifold
+            
 
         }
 
@@ -132,36 +101,39 @@ namespace HeatingPipeV5
                 Lvl = Element.LookupParameter("Уровень").AsValueString();
             }
 
+            if (elementId.IntegerValue == 2360288)
+            {
+                var nextelement2 = elementId;
+            }
 
 
 
-
-            if (Element is Duct)
+            if (Element is Pipe)
             {
                 MSystem = (Element as MEPCurve).MEPSystem;
-                SystemType = (MSystem as MechanicalSystem).SystemType;
+                SystemType = (MSystem as PipingSystem).SystemType;
                 ShortSystemName = Element.LookupParameter("Сокращение для системы").AsString();
 
-                OwnConnectors = ((Element as Duct) as MEPCurve).ConnectorManager.Connectors;
-                string primaryvolume = Element.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM).AsValueString();
+                OwnConnectors = ((Element as Pipe) as MEPCurve).ConnectorManager.Connectors;
+                string primaryvolume = Element.get_Parameter(BuiltInParameter.RBS_PIPE_FLOW_PARAM).AsValueString();
                 Volume = GetValue(primaryvolume);
                 string primarylength = Element.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsValueString();
                 ModelLength = primarylength;
-                string primaryvelocity = Element.get_Parameter(BuiltInParameter.RBS_VELOCITY).AsValueString();
+                string primaryvelocity = Element.get_Parameter(BuiltInParameter.RBS_PIPE_VELOCITY_PARAM).AsValueString();
                 ModelVelocity = GetValue(primaryvelocity);
                 foreach (Connector connector in OwnConnectors)
                 {
                     ConnectorSet nextconnectors = connector.AllRefs;
 
-                    if (connector.Domain != Domain.DomainHvac)
+                    if (connector.Domain == Domain.DomainUndefined)
                     {
                         continue;
                     }
-                    else
+                    else if (connector.Domain == Domain.DomainPiping || connector.Domain == Domain.DomainHvac)
                     {
                         foreach (Connector connect in nextconnectors)
                         {
-                            if (connect.Domain != Domain.DomainHvac)
+                            if (connect.Domain == Domain.DomainUndefined)
                             {
                                 continue;
                             }
@@ -181,7 +153,7 @@ namespace HeatingPipeV5
                                     continue;
                                 }
 
-                                if (doc.GetElement(connect.Owner.Id) is MechanicalSystem || doc.GetElement(connect.Owner.Id) is DuctInsulation)
+                                if (doc.GetElement(connect.Owner.Id) is PipingSystem || doc.GetElement(connect.Owner.Id) is PipeInsulation)
                                 {
                                     continue;
                                 }
@@ -200,7 +172,7 @@ namespace HeatingPipeV5
                                     if (connect.Domain == Autodesk.Revit.DB.Domain.DomainHvac || connect.Domain == Autodesk.Revit.DB.Domain.DomainPiping)
                                     {
 
-                                        if (SystemType == DuctSystemType.SupplyAir)
+                                        if (SystemType == PipeSystemType.SupplyHydronic)
                                         {
 
                                             if (connect.Direction == FlowDirectionType.Out)
@@ -213,38 +185,26 @@ namespace HeatingPipeV5
                                                 custom.Type = connect.ConnectorType;
                                                 if (custom.Shape == ConnectorProfileType.Round)
                                                 {
-                                                    DetailType = Detail.RoundDuct;
+                                                    DetailType = Detail.Pipe;
                                                     custom.Diameter = connect.Radius * 2;
-                                                    custom.EquiDiameter = custom.Diameter;
-                                                    string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsValueString();
-                                                    ModelDiameter = primarydiameter;
+                                                    //custom.EquiDiameter = custom.Diameter;
+                                                    //string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsValueString();
+                                                    // ModelDiameter = primarydiameter;
 
-                                                    ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
-                                                    ModelHydraulicArea = ((Math.PI * Math.Pow(Convert.ToDouble(ModelHydraulicDiameter), 2) / 4) / 1000000).ToString();
+                                                    /*ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
+                                                    ModelHydraulicArea = ((Math.PI * Math.Pow(Convert.ToDouble(ModelHydraulicDiameter), 2) / 4) / 1000000).ToString();*/
                                                 }
-                                                else
-                                                {
-                                                    DetailType = Detail.RectangularDuct;
-                                                    custom.Width = connect.Width;
-                                                    custom.Height = connect.Height;
-                                                    custom.EquiDiameter = 2 * custom.Width * custom.Height / (custom.Width + custom.Height);
-                                                    string primarywidth = Element.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM).AsValueString();
-                                                    ModelWidth = primarywidth;
-                                                    string primaryheight = Element.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM).AsValueString();
-                                                    ModelHeight = primaryheight;
-                                                    ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
-                                                    ModelHydraulicArea = (Math.PI * Math.Pow(Convert.ToDouble(ModelHydraulicDiameter), 2) / 4).ToString();
-                                                }
+                                               
                                                 custom.Coefficient = connect.Coefficient;
                                                 custom.PressureDrop = connect.PressureDrop; // Вот это добавлено в версии 4.1
                                                 custom.NextOwnerId = custom.NextOwnerId;
                                                 NextElementId = custom.NextOwnerId;
-                                                EquiDiameter = custom.EquiDiameter * 304.8;
+                                                
                                                 //SecondaryConnectors.Add(custom);
                                             }
 
                                         }
-                                        else if (SystemType == DuctSystemType.ExhaustAir)
+                                        else if (SystemType == PipeSystemType.ReturnHydronic)
                                         {
                                             if (connect.Direction == FlowDirectionType.In)
                                             {
@@ -256,31 +216,19 @@ namespace HeatingPipeV5
                                                 custom.Type = connect.ConnectorType;
                                                 if (custom.Shape == ConnectorProfileType.Round)
                                                 {
-                                                    DetailType = Detail.RoundDuct;
+                                                    DetailType = Detail.Pipe;
                                                     custom.Diameter = connect.Radius * 2;
-                                                    custom.EquiDiameter = custom.Diameter;
-                                                    string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsValueString();
-                                                    ModelDiameter = primarydiameter;
-                                                    ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
+                                                    //custom.EquiDiameter = custom.Diameter;
+                                                    //string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsValueString();
+                                                    //ModelDiameter = primarydiameter;
+                                                   
                                                 }
-                                                else
-                                                {
-                                                    DetailType = Detail.RectangularDuct;
-                                                    custom.Width = connect.Width;
-                                                    custom.Height = connect.Height;
-                                                    custom.EquiDiameter = 2 * custom.Width * custom.Height / (custom.Width + custom.Height);
-                                                    string primarywidth = Element.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM).AsValueString();
-                                                    ModelWidth = primarywidth;
-                                                    string primaryheight = Element.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM).AsValueString();
-                                                    ModelHeight = primaryheight;
-                                                    ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
-                                                }
+                                                
                                                 custom.Coefficient = connect.Coefficient;
                                                 custom.PressureDrop = connect.PressureDrop; // Вот это добавлено в версии 4.1
                                                 custom.NextOwnerId = custom.NextOwnerId;
                                                 NextElementId = custom.NextOwnerId;
-                                                EquiDiameter = custom.EquiDiameter * 304.8;
-                                                //SecondaryConnectors.Add(custom);
+                                                
                                             }
                                         }
 
@@ -300,25 +248,25 @@ namespace HeatingPipeV5
 
             }
 
-            if (Element is FlexDuct)
+            if (Element is FlexPipe)
             {
                 MSystem = (Element as MEPCurve).MEPSystem;
-                SystemType = (MSystem as MechanicalSystem).SystemType;
+                SystemType = (MSystem as PipingSystem).SystemType;
                 ShortSystemName = Element.LookupParameter("Сокращение для системы").AsString();
 
                 OwnConnectors = ((Element as FlexDuct) as MEPCurve).ConnectorManager.Connectors;
-                string primaryvolume = Element.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM).AsValueString();
+                string primaryvolume = Element.get_Parameter(BuiltInParameter.RBS_PIPE_FLOW_PARAM).AsValueString();
                 Volume = GetValue(primaryvolume);
                 string primarylength = Element.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsValueString();
                 ModelLength = primarylength;
-                string primaryvelocity = Element.get_Parameter(BuiltInParameter.RBS_VELOCITY).AsValueString();
+                string primaryvelocity = Element.get_Parameter(BuiltInParameter.RBS_PIPE_VELOCITY_PARAM).AsValueString();
                 ModelVelocity = GetValue(primaryvelocity);
 
                 foreach (Connector connector in OwnConnectors)
                 {
                     ConnectorSet nextconnectors = connector.AllRefs;
 
-                    if (connector.Domain != Domain.DomainHvac)
+                    if (connector.Domain == Domain.DomainUndefined)
                     {
                         continue;
                     }
@@ -326,11 +274,11 @@ namespace HeatingPipeV5
                     {
                         foreach (Connector connect in nextconnectors)
                         {
-                            if (connect.Domain != Domain.DomainHvac)
+                            if (connector.Domain != Domain.DomainPiping || connector.Domain != Domain.DomainHvac)
                             {
                                 continue;
                             }
-                            else
+                            else if  (connector.Domain == Domain.DomainPiping || connector.Domain == Domain.DomainHvac)
                             {
                                 CustomConnector custom = new CustomConnector(doc, ElementId, SystemType);
                                 try
@@ -346,7 +294,7 @@ namespace HeatingPipeV5
                                     continue;
                                 }
 
-                                if (doc.GetElement(connect.Owner.Id) is MechanicalSystem || doc.GetElement(connect.Owner.Id) is DuctInsulation)
+                                if (doc.GetElement(connect.Owner.Id) is PipingSystem || doc.GetElement(connect.Owner.Id) is DuctInsulation)
                                 {
                                     continue;
                                 }
@@ -365,7 +313,7 @@ namespace HeatingPipeV5
                                     if (connect.Domain == Autodesk.Revit.DB.Domain.DomainHvac || connect.Domain == Autodesk.Revit.DB.Domain.DomainPiping)
                                     {
 
-                                        if (SystemType == DuctSystemType.SupplyAir)
+                                        if (SystemType == PipeSystemType.SupplyHydronic)
                                         {
 
                                             if (connect.Direction == FlowDirectionType.Out)
@@ -378,40 +326,25 @@ namespace HeatingPipeV5
                                                 custom.Type = connect.ConnectorType;
                                                 if (custom.Shape == ConnectorProfileType.Round)
                                                 {
-                                                    DetailType = Detail.RoundDuct;
+                                                    DetailType = Detail.FlexPipe;
                                                     custom.Diameter = connect.Radius * 2;
                                                     custom.EquiDiameter = custom.Diameter;
                                                     string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsValueString();
                                                     ModelDiameter = primarydiameter;
 
-                                                    ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
-                                                    ModelHydraulicArea = ((Math.PI * Math.Pow(Convert.ToDouble(ModelHydraulicDiameter), 2) / 4) / 1000000).ToString();
-                                                    DetailType = Detail.RoundFlexDuct;
+                                                    
                                                 }
-                                                else
-                                                {
-                                                    DetailType = Detail.RectangularDuct;
-                                                    custom.Width = connect.Width;
-                                                    custom.Height = connect.Height;
-                                                    custom.EquiDiameter = 2 * custom.Width * custom.Height / (custom.Width + custom.Height);
-                                                    string primarywidth = Element.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM).AsValueString();
-                                                    ModelWidth = primarywidth;
-                                                    string primaryheight = Element.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM).AsValueString();
-                                                    ModelHeight = primaryheight;
-                                                    ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
-                                                    ModelHydraulicArea = (Math.PI * Math.Pow(Convert.ToDouble(ModelHydraulicDiameter), 2) / 4).ToString();
-                                                    DetailType = Detail.RectFlexDuct;
-                                                }
+                                                
                                                 custom.Coefficient = connect.Coefficient;
                                                 custom.PressureDrop = connect.PressureDrop; // Вот это добавлено в версии 4.1
                                                 custom.NextOwnerId = custom.NextOwnerId;
                                                 NextElementId = custom.NextOwnerId;
                                                 EquiDiameter = custom.EquiDiameter * 304.8;
-                                                //SecondaryConnectors.Add(custom);
+                                               
                                             }
 
                                         }
-                                        else if (SystemType == DuctSystemType.ExhaustAir)
+                                        else if (SystemType == PipeSystemType.ReturnHydronic)
                                         {
                                             if (connect.Direction == FlowDirectionType.In)
                                             {
@@ -423,33 +356,20 @@ namespace HeatingPipeV5
                                                 custom.Type = connect.ConnectorType;
                                                 if (custom.Shape == ConnectorProfileType.Round)
                                                 {
-                                                    DetailType = Detail.RoundDuct;
+                                                    DetailType = Detail.FlexPipe;
                                                     custom.Diameter = connect.Radius * 2;
                                                     custom.EquiDiameter = custom.Diameter;
                                                     string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsValueString();
                                                     ModelDiameter = primarydiameter;
-                                                    ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
-                                                    DetailType = Detail.RoundFlexDuct;
+                                                    
                                                 }
-                                                else
-                                                {
-                                                    DetailType = Detail.RectangularDuct;
-                                                    custom.Width = connect.Width;
-                                                    custom.Height = connect.Height;
-                                                    custom.EquiDiameter = 2 * custom.Width * custom.Height / (custom.Width + custom.Height);
-                                                    string primarywidth = Element.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM).AsValueString();
-                                                    ModelWidth = primarywidth;
-                                                    string primaryheight = Element.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM).AsValueString();
-                                                    ModelHeight = primaryheight;
-                                                    ModelHydraulicDiameter = Element.get_Parameter(BuiltInParameter.RBS_HYDRAULIC_DIAMETER_PARAM).AsValueString();
-                                                    DetailType = Detail.RectFlexDuct;
-                                                }
+                                                
                                                 custom.Coefficient = connect.Coefficient;
                                                 custom.PressureDrop = connect.PressureDrop; // Вот это добавлено в версии 4.1
                                                 custom.NextOwnerId = custom.NextOwnerId;
                                                 NextElementId = custom.NextOwnerId;
                                                 EquiDiameter = custom.EquiDiameter * 304.8;
-                                                //SecondaryConnectors.Add(custom);
+                                                
                                             }
                                         }
 
@@ -510,21 +430,23 @@ namespace HeatingPipeV5
                 {
                     DetailType = Detail.FireProtectValve;
                 }
-                else if (Element.Category.Id.IntegerValue == -2008013)
+                else if (Element.Category.Id.IntegerValue == -2001140)
                 {
-                    DetailType = Detail.AirTerminal;
+                    DetailType = Detail.Equipment;
                 }
                 /*else if (Element.LookupParameter("ТипДетали").AsString())
                 {
                     DetailType = Detail.FireProtectValve;
                 }*/
 
+
+
                 OwnConnectors = (Element as FamilyInstance).MEPModel.ConnectorManager.Connectors;
 
                 foreach (Connector connector in OwnConnectors)
                 {
 
-                    if (connector.Domain != Domain.DomainHvac)
+                    if (connector.Domain == Domain.DomainUndefined )
                     {
                         continue;
                     }
@@ -534,13 +456,10 @@ namespace HeatingPipeV5
 
                         foreach (Connector connect in nextconnectors)
                         {
-                            if (connect.Domain != Domain.DomainHvac)
+                            
+                             if (connect.Domain == Autodesk.Revit.DB.Domain.DomainHvac || connect.Domain == Autodesk.Revit.DB.Domain.DomainPiping)
                             {
-                                continue;
-                            }
-                            else
-                            {
-                                SystemType = connect.DuctSystemType;
+                                SystemType = connect.PipeSystemType;
                                 CustomConnector custom = new CustomConnector(doc, ElementId, SystemType);
                                 try
                                 {
@@ -555,7 +474,7 @@ namespace HeatingPipeV5
                                     continue;
                                 }
 
-                                if (doc.GetElement(connect.Owner.Id) is MechanicalSystem || doc.GetElement(connect.Owner.Id) is DuctInsulation)
+                                if (doc.GetElement(connect.Owner.Id) is PipingSystem || doc.GetElement(connect.Owner.Id) is PipeInsulation)
                                 {
                                     continue;
                                 }
@@ -574,10 +493,10 @@ namespace HeatingPipeV5
                                     if (connect.Domain == Autodesk.Revit.DB.Domain.DomainHvac || connect.Domain == Autodesk.Revit.DB.Domain.DomainPiping)
                                     {
 
-                                        if (SystemType == DuctSystemType.SupplyAir)
+                                        if (SystemType == PipeSystemType.SupplyHydronic)
                                         {
 
-                                            if (connect.Direction == FlowDirectionType.Out)
+                                            if (connect.Direction == FlowDirectionType.Out || connect.Direction == FlowDirectionType.Bidirectional)
                                             {
                                                 custom.Flow = connect.Flow;
                                                 custom.Domain = Domain.DomainHvac;
@@ -590,8 +509,9 @@ namespace HeatingPipeV5
                                                     custom.Diameter = connect.Radius * 2;
                                                     custom.EquiDiameter = custom.Diameter;
                                                     ModelDiameter = Math.Round(custom.Diameter * 304.8, 0).ToString();
+                                                    
                                                 }
-                                                else
+                                               /* else
                                                 {
                                                     custom.Width = connect.Width;
                                                     custom.Height = connect.Height;
@@ -608,20 +528,20 @@ namespace HeatingPipeV5
                                                     {
 
                                                     }
-                                                }
+                                                }*/
                                                 custom.Coefficient = connect.Coefficient;
                                                 custom.PressureDrop = connect.PressureDrop; // Вот это добавлено в версии 4.1
                                                 custom.NextOwnerId = custom.NextOwnerId;
                                                 NextElementId = custom.NextOwnerId;
                                                 EquiDiameter = custom.EquiDiameter;
-
+                                                SupplyConnector = custom;
                                                 //SecondaryConnectors.Add(custom);
                                             }
 
                                         }
-                                        else if (SystemType == DuctSystemType.ExhaustAir)
+                                        else if (SystemType == PipeSystemType.ReturnHydronic)
                                         {
-                                            if (connect.Direction == FlowDirectionType.In)
+                                            if (connect.Direction == FlowDirectionType.In || connect.Direction == FlowDirectionType.Bidirectional)
                                             {
                                                 custom.Flow = connect.Flow;
                                                 custom.Domain = Domain.DomainHvac;
@@ -635,7 +555,7 @@ namespace HeatingPipeV5
                                                     custom.EquiDiameter = custom.Diameter;
                                                     ModelDiameter = Math.Round(custom.Diameter * 304.8, 0).ToString();
                                                 }
-                                                else
+                                                /*else
                                                 {
                                                     custom.Width = connect.Width;
                                                     custom.Height = connect.Height;
@@ -652,12 +572,13 @@ namespace HeatingPipeV5
                                                     {
 
                                                     }
-                                                }
+                                                }*/
                                                 custom.Coefficient = connect.Coefficient;
                                                 custom.PressureDrop = connect.PressureDrop; // Вот это добавлено в версии 4.1
                                                 custom.NextOwnerId = custom.NextOwnerId;
                                                 NextElementId = custom.NextOwnerId;
                                                 EquiDiameter = custom.EquiDiameter;
+                                                ReturnConnector = custom;
                                                 //SecondaryConnectors.Add(custom);
                                             }
                                         }

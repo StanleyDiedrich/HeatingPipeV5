@@ -42,7 +42,7 @@ namespace HeatingPipeV5
         public bool IsStraight { get; set; }
         List<CustomConnector> Connectors { get; set; } = new List<CustomConnector>();
 
-        public CustomConnector(Autodesk.Revit.DB.Document document, ElementId elementId, Autodesk.Revit.DB.Mechanical.DuctSystemType ductSystemType)
+        public CustomConnector(Autodesk.Revit.DB.Document document, ElementId elementId, Autodesk.Revit.DB.Plumbing.PipeSystemType pipeSystemType)
         {
             OwnerId = elementId;
 
