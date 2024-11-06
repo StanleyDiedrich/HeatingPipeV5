@@ -87,21 +87,18 @@ namespace HeatingPipeV5
                         {
                             var element2 = element;
                         }
-                        branch.Pressure += 10;
-                        
+                        branch.Pressure += 8000;
+                        branch.Length += 0;
                         //Сюда допишем простую логику на воздухораспределитель по magicad
                     }
                     else if (element.DetailType == CustomElement.Detail.Elbow)
                     {
 
-                        if (element.ElementId.IntegerValue == 6246191)
-                        {
-                            var element2 = element;
-                        }
+                       
                         //CustomElbow customElbow = new CustomElbow(Document, element);
                         //element.LocRes = customElbow.LocRes;
                         //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += 5;
+                        branch.Pressure += 15;
                     }
                     else if (element.DetailType == CustomElement.Detail.Tee)
                     {
@@ -112,7 +109,7 @@ namespace HeatingPipeV5
                         //CustomTee customTee = new CustomTee(Document, element);
                         //element.LocRes = customTee.LocRes;
                         //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += 7;
+                        branch.Pressure += 20;
                     }
                     /*else if (element.DetailType == CustomElement.Detail.TapAdjustable)
                     {
@@ -145,22 +142,27 @@ namespace HeatingPipeV5
                         {
                             element.LocRes = 0.5;
                         }
-
+                        branch.Pressure += 5;
                     }
                    
                     else if (element.DetailType == CustomElement.Detail.Pipe )
                     {
-                       /* branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PRESSURE_DROP).AsDouble();
-                        string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PRESSURE_DROP).AsValueString().Split();
-                        element.PStat = double.Parse(pressureDropString[0], formatter);*/
+                        branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
+                        string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
+                        element.PStat = double.Parse(pressureDropString[0], formatter);
                     }
                     else if (element.DetailType == CustomElement.Detail.Valve)
                     {
-                        branch.Pressure += 6;
+                        branch.Pressure += 10000;
                     }
                     else if (element.DetailType == CustomElement.Detail.Union)
                     {
                         branch.Pressure += 0;
+                    }
+                    else if (element.OwnConnectors.Size>3)
+                    {
+                        element.DetailType = CustomElement.Detail.Manifold;
+                        branch.Pressure += 5000;
                     }
                 }
             }

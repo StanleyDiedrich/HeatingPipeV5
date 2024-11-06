@@ -15,6 +15,9 @@ namespace HeatingPipeV5
         private static int _counter = 0;
         public int Number { get; set; }
         public double Pressure { get; set; }
+        public double Length { get; set; }
+
+        public double RelPressure { get; set; }
         public double PBTot { get; set; }
         public List<CustomElement> Elements { get; set; } = new List<CustomElement>();
         public CustomBranch(Autodesk.Revit.DB.Document document, ElementId elementId)
@@ -81,7 +84,10 @@ namespace HeatingPipeV5
             {
                 Elements.Add(customElementSup);
                 nextElement = customElementSup.NextElementId;
-
+                if (customElementSup.OwnConnectors.Size>3)
+                {
+                    nextElement = customElementSup.SupplyConnector.NextOwnerId;
+                }
                 customElementSup = new CustomElement(document, nextElement);
             }
             while (nextElement != null);
@@ -95,13 +101,27 @@ namespace HeatingPipeV5
 
                 Elements.Add(customElementRet);
                 nextElement = customElementRet.NextElementId;
-
+                if (customElementRet.OwnConnectors.Size>3)
+                {
+                    nextElement = customElementRet.ReturnConnector.NextOwnerId;
+                }
                 customElementRet = new CustomElement(document, nextElement);
             }
             while (nextElement != null);
 
         }
 
+        public List<ElementId> ShowElements ()
+        {
+            List<ElementId> result = new List<ElementId>();
+            foreach (var el in Elements)
+            {
+               
+                    result.Add(el.ElementId);
+                
+            }
+            return result;
+        }
 
 
 
