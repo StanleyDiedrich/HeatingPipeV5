@@ -19,6 +19,7 @@ namespace HeatingPipeV5
     {
         public Element Element { get; set; }
         public ElementId ElementId { get; set; }
+        public string ElementName { get; set; }
         public ElementId NextElementId { get; set; }
         public MEPSystem MSystem { get; set; }
         public MEPModel Model { get; set; }
@@ -74,6 +75,7 @@ namespace HeatingPipeV5
         public Detail DetailType { get; set; }
         public int TrackNumber { get; set; }
         public int BranchNumber { get; set; }
+        public int GroupNumber { get; set; }
         public bool MainTrack { get; set; }
         private string GetValue(string primaryvolume)
         {
@@ -89,6 +91,7 @@ namespace HeatingPipeV5
             }
             ElementId = elementId;
             Element = doc.GetElement(ElementId);
+            ElementName = Element.Name;
             SystemName = Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
 
             if (Element.LookupParameter("Базовый уровень") != null)
@@ -254,7 +257,7 @@ namespace HeatingPipeV5
                 SystemType = (MSystem as PipingSystem).SystemType;
                 ShortSystemName = Element.LookupParameter("Сокращение для системы").AsString();
 
-                OwnConnectors = ((Element as FlexDuct) as MEPCurve).ConnectorManager.Connectors;
+                OwnConnectors = ((Element as FlexPipe) as MEPCurve).ConnectorManager.Connectors;
                 string primaryvolume = Element.get_Parameter(BuiltInParameter.RBS_PIPE_FLOW_PARAM).AsValueString();
                 Volume = GetValue(primaryvolume);
                 string primarylength = Element.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsValueString();

@@ -14,6 +14,7 @@ namespace HeatingPipeV5
         public Autodesk.Revit.DB.Document Document { get; set; }
         private static int _counter = 0;
         public int Number { get; set; }
+        public int GroupNumber { get; set; }
         public double Pressure { get; set; }
         public double Length { get; set; }
 
@@ -23,6 +24,7 @@ namespace HeatingPipeV5
         public CustomBranch(Autodesk.Revit.DB.Document document, ElementId elementId)
         {
             Document = document;
+            
             Number = _counter;
             _counter++;
         }
