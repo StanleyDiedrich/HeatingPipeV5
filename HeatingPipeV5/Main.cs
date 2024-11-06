@@ -46,9 +46,9 @@ namespace HeatingPipeV5
                 {
                     if (newpipe != null)
                     {
-                        if (!systemnumbers.Contains(newpipe.LookupParameter("Имя системы").AsString()))
+                        if (!systemnumbers.Contains(newpipe.get_Parameter(BuiltInParameter.RBS_DUCT_PIPE_SYSTEM_ABBREVIATION_PARAM).AsString()))
                         {
-                            systemnumbers.Add(newpipe.LookupParameter("Имя системы").AsString());
+                            systemnumbers.Add(newpipe.get_Parameter(BuiltInParameter.RBS_DUCT_PIPE_SYSTEM_ABBREVIATION_PARAM).AsString());
                         }
                     }
                 }
