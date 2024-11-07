@@ -91,18 +91,18 @@ namespace HeatingPipeV5
 
                 selectedterminals = GetMechanicalEquipment(doc, systemName);
                 CustomCollection collection = GetCollection(doc, selectedterminals);
-                uIDocument.Selection.SetElementIds(collection.ShowElements());
+                //uIDocument.Selection.SetElementIds(collection.ShowElements());
                  
                 
-                //collection.Calcualate(mainViewModel.Density);
+                collection.Calcualate(mainViewModel.Density);
                 //collection.ResCalculate();
-                //CustomBranch selectedbranch = collection.SelectMainBranch();
-               
+                CustomBranch selectedbranch = collection.SelectMainBranch();
+                //uIDocument.Selection.SetElementIds(selectedbranch.ShowElements());
 
-                //collection.MarkCollection(selectedbranch);
-                //string content = collection.GetContent();
-                //collection.SaveFile(content);
-               
+                collection.MarkCollection(selectedbranch);
+                string content = collection.GetContent();
+                collection.SaveFile(content);
+
             }
 
             return Result.Succeeded;

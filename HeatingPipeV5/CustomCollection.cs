@@ -30,8 +30,9 @@ namespace HeatingPipeV5
         public void CreateBranch(Document document, ElementId airterminal)
         {
             CustomBranch customBranch = new CustomBranch(Document, airterminal);
+
             customBranch.CreateNewBranch(Document, airterminal);
-            //CustomElement customElement = new CustomElement(Document,  airterminal);
+            CustomElement customElement = new CustomElement(Document,  airterminal);
             Collection.Add(customBranch);
 
 
@@ -80,27 +81,24 @@ namespace HeatingPipeV5
                 foreach (var element in branch.Elements)
                 {
 
-                    if (element.DetailType == CustomElement.Detail.AirTerminal)
+                    if (element.DetailType == CustomElement.Detail.Equipment)
                     {
                         if (element.ElementId.IntegerValue == 5807241)
                         {
                             var element2 = element;
                         }
-                        branch.Pressure += 10;
-                        
+                        branch.Pressure += 8000;
+                        branch.Length += 0;
                         //Сюда допишем простую логику на воздухораспределитель по magicad
                     }
                     else if (element.DetailType == CustomElement.Detail.Elbow)
                     {
 
-                        if (element.ElementId.IntegerValue == 6246191)
-                        {
-                            var element2 = element;
-                        }
+                       
                         //CustomElbow customElbow = new CustomElbow(Document, element);
                         //element.LocRes = customElbow.LocRes;
                         //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += 5;
+                        branch.Pressure += 15;
                     }
                     else if (element.DetailType == CustomElement.Detail.Tee)
                     {
@@ -111,7 +109,7 @@ namespace HeatingPipeV5
                         //CustomTee customTee = new CustomTee(Document, element);
                         //element.LocRes = customTee.LocRes;
                         //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += 7;
+                        branch.Pressure += 20;
                     }
                     /*else if (element.DetailType == CustomElement.Detail.TapAdjustable)
                     {
@@ -144,22 +142,27 @@ namespace HeatingPipeV5
                         {
                             element.LocRes = 0.5;
                         }
-
+                        branch.Pressure += 5;
                     }
                    
                     else if (element.DetailType == CustomElement.Detail.Pipe )
                     {
-                       /* branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PRESSURE_DROP).AsDouble();
-                        string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PRESSURE_DROP).AsValueString().Split();
-                        element.PStat = double.Parse(pressureDropString[0], formatter);*/
+                        branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
+                        string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
+                        element.PStat = double.Parse(pressureDropString[0], formatter);
                     }
                     else if (element.DetailType == CustomElement.Detail.Valve)
                     {
-                        branch.Pressure += 6;
+                        branch.Pressure += 10000;
                     }
                     else if (element.DetailType == CustomElement.Detail.Union)
                     {
                         branch.Pressure += 0;
+                    }
+                    else if (element.OwnConnectors.Size>2)
+                    {
+                        element.DetailType = CustomElement.Detail.Manifold;
+                        branch.Pressure += 5000;
                     }
                 }
             }
@@ -196,14 +199,20 @@ namespace HeatingPipeV5
             List<CustomBranch> newCustomCollection = new List<CustomBranch>();
             HashSet<ElementId> checkedElements = new HashSet<ElementId>();
 
+           
+
+
+
             // Сначала обрабатываем основную ветвь 
             foreach (var branch in Collection)
             {
                 if (branch.Number == customBranch.Number)
                 {
                     int trackCounter = 0;
+                    
                     foreach (var element in branch.Elements)
                     {
+                        element.GroupNumber = 0;
                         element.TrackNumber = trackCounter;
                         element.BranchNumber = branch.Number;
                         element.MainTrack = true;
@@ -214,7 +223,7 @@ namespace HeatingPipeV5
                     break; // Прекращаем дальнейший обход после нахождения основной ветви 
                 }
             }
-
+            
             // Обрабатываем остальные ветви 
             foreach (var branch in Collection)
             {
@@ -244,7 +253,35 @@ namespace HeatingPipeV5
 
                 newCustomCollection.Add(newCustomBranch);
             }
+            int groupnumber = 0;
+            foreach (var branch in newCustomCollection)
+            {
+                var pipe = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment).First();
+                string sysname = pipe.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
+                string sysname1 = sysname.Split(',')[0];
+                string sysname2 = sysname.Split(',')[1];
 
+                foreach (var branch2 in newCustomCollection)
+                {
+                    foreach (var element in branch2.Elements)
+                    {
+                        if (element.DetailType == CustomElement.Detail.Manifold)
+                        {
+                            continue;
+                        }
+                        else if (element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname1) || element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname2))
+                        {
+                            element.GroupNumber = groupnumber;
+                        }
+                         if (element.BranchNumber==customBranch.Number)
+                        {
+                            element.GroupNumber = groupnumber;
+                        }
+                    }
+                }
+                groupnumber++;
+
+            }
             // Обновляем коллекцию 
             Collection = newCustomCollection;
         }
@@ -254,15 +291,15 @@ namespace HeatingPipeV5
         public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("ElementId;DetailType;SystemName;Level;BranchNumber;SectionNumber;Volume;Length;Width;Height;Diameter;HydraulicDiameter;HydraulicArea;Velocity;PStat;KMS;PDyn;Ptot;Code;MainTrack");
+            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;GroupNumber;BranchNumber;SectionNumber;Volume;Length;Width;Height;Diameter;HydraulicDiameter;HydraulicArea;Velocity;PStat;KMS;PDyn;Ptot;Code;MainTrack");
 
             foreach (var branch in Collection)
             {
                 foreach (var element in branch.Elements)
                 {
-                    string a = $"{element.ElementId};{element.DetailType};{element.SystemName};{element.Lvl};{element.BranchNumber};{element.TrackNumber};" +
+                    string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.SystemName};{element.Lvl};{element.GroupNumber};{element.BranchNumber};{element.TrackNumber};" +
                          $"{element.Volume};{element.ModelLength};{element.ModelWidth};{element.ModelHeight};{element.ModelDiameter};{element.ModelHydraulicDiameter};{element.ModelHydraulicArea};{element.ModelVelocity};{element.PStat};{element.LocRes};{element.PDyn};{element.Ptot};" +
-                         $"{element.SystemName}-{element.Lvl}-{element.BranchNumber}-{element.TrackNumber};{element.MainTrack}";
+                         $"{element.SystemName}-{element.Lvl}-{element.GroupNumber}-{element.BranchNumber}-{element.TrackNumber};{element.MainTrack}";
                     csvcontent.AppendLine(a);
                 }
             }

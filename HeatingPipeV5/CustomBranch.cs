@@ -14,12 +14,17 @@ namespace HeatingPipeV5
         public Autodesk.Revit.DB.Document Document { get; set; }
         private static int _counter = 0;
         public int Number { get; set; }
+        public int GroupNumber { get; set; }
         public double Pressure { get; set; }
+        public double Length { get; set; }
+
+        public double RelPressure { get; set; }
         public double PBTot { get; set; }
         public List<CustomElement> Elements { get; set; } = new List<CustomElement>();
         public CustomBranch(Autodesk.Revit.DB.Document document, ElementId elementId)
         {
             Document = document;
+            
             Number = _counter;
             _counter++;
         }
@@ -72,17 +77,53 @@ namespace HeatingPipeV5
         {
             ElementId nextElement = null;
             CustomElement customElement = new CustomElement(document, airterminal);
+            Elements.Add(customElement);
+            var nextsupplyelement = customElement.SupplyConnector.NextOwnerId;
+            var nextreturnelement = customElement.ReturnConnector.NextOwnerId;
+           
+            CustomElement customElementSup = new CustomElement(document, nextsupplyelement);
+            do
+            {
+                Elements.Add(customElementSup);
+                nextElement = customElementSup.NextElementId;
+                if (customElementSup.OwnConnectors.Size>3)
+                {
+                    nextElement = customElementSup.SupplyConnector.NextOwnerId;
+                }
+                customElementSup = new CustomElement(document, nextElement);
+            }
+            while (nextElement != null);
+
+
+
+            CustomElement customElementRet = new CustomElement(document, nextreturnelement);
+            
             do
             {
 
-                Elements.Add(customElement);
-                nextElement = customElement.NextElementId;
-                customElement = new CustomElement(document, nextElement);
+                Elements.Add(customElementRet);
+                nextElement = customElementRet.NextElementId;
+                if (customElementRet.OwnConnectors.Size>3)
+                {
+                    nextElement = customElementRet.ReturnConnector.NextOwnerId;
+                }
+                customElementRet = new CustomElement(document, nextElement);
             }
             while (nextElement != null);
 
         }
 
+        public List<ElementId> ShowElements ()
+        {
+            List<ElementId> result = new List<ElementId>();
+            foreach (var el in Elements)
+            {
+               
+                    result.Add(el.ElementId);
+                
+            }
+            return result;
+        }
 
 
 
