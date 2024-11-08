@@ -22,6 +22,7 @@ namespace HeatingPipeV5
         public double Roughness { get; set; }
         public double Lambda { get; set; }
         public double Pressure { get; set; }
+        public double Length { get; set; }
 
         public CustomPipe (Autodesk.Revit.DB.Document document, CustomElement element)
         {
@@ -34,14 +35,15 @@ namespace HeatingPipeV5
             Temperature = Convert.ToDouble(Document.GetElement(syselementId).get_Parameter(BuiltInParameter.RBS_PIPE_FLUID_TEMPERATURE_PARAM).AsValueString().Split()[0]);
             FlowVelocity = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_VELOCITY_PARAM).AsValueString().Split()[0]);
             Roughness = Element.get_Parameter(BuiltInParameter.RBS_PIPE_ROUGHNESS_PARAM).AsDouble() * 304.8;
-            Diameter = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsValueString());
+            Diameter = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsValueString())/1000;
+            Length = Element.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsDouble() * 304.8/1000;
             Viscosity visosity = new Viscosity();
             Viscosity = visosity.GetViscosity(Temperature);
             CustomDensity density = new CustomDensity();
             Density = density.GetDensity(Temperature);
-            Reynolds = FlowVelocity * Diameter / Viscosity;
+            Reynolds = FlowVelocity * Diameter * 1000000 / Viscosity;
             Lambda = GetLambda(Reynolds, Roughness);
-            Pressure = Lambda / Diameter * Density * FlowVelocity * FlowVelocity / 2;
+            Pressure = Lambda / Diameter * Density * FlowVelocity * FlowVelocity / 2*Length;
         }
 
         private double GetLambda(double reynolds, double roughness)

@@ -93,8 +93,13 @@ namespace HeatingPipeV5
                     }
                     else if (element.DetailType == CustomElement.Detail.Elbow)
                     {
-
-                       
+                        if (element.ElementId.IntegerValue == 2794589)
+                        {
+                            var element2 = element;
+                        }
+                        CustomElbow customElbow = new CustomElbow(Document, element);
+                        element.LocRes = customElbow.LocRes;
+                        element.PDyn = customElbow.PDyn;
                         //CustomElbow customElbow = new CustomElbow(Document, element);
                         //element.LocRes = customElbow.LocRes;
                         //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
@@ -147,11 +152,16 @@ namespace HeatingPipeV5
                    
                     else if (element.DetailType == CustomElement.Detail.Pipe )
                     {
-
-
-                        branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
+                        if (element.ElementId.IntegerValue == 2808562)
+                        {
+                            ElementId el = element.ElementId;
+                        }
+                            CustomPipe customPipe = new CustomPipe(Document, element);
+                        element.Ptot = customPipe.Pressure;
+                        branch.Pressure += customPipe.Pressure;
+                        /*branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
                         string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
-                        element.PStat = double.Parse(pressureDropString[0], formatter);
+                        element.PStat = double.Parse(pressureDropString[0], formatter);*/
                     }
                     else if (element.DetailType == CustomElement.Detail.Valve)
                     {

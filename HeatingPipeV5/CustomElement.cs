@@ -27,7 +27,7 @@ namespace HeatingPipeV5
         public string ShortSystemName { get; set; }
         public string Lvl { get; set; }
         public PipeSystemType SystemType { get; set; }
-
+       
         public CustomConnector SelectedConnector { get; set; }
         public CustomConnector SupplyConnector { get; set; }
         public CustomConnector ReturnConnector { get; set; }

@@ -58,10 +58,12 @@
     <Compile Include="CustomBranch.cs" />
     <Compile Include="CustomCollection.cs" />
     <Compile Include="CustomConnector.cs" />
+    <Compile Include="CustomElbow.cs" />
     <Compile Include="CustomElement.cs" />
     <Compile Include="CustomPipe.cs" />
     <Compile Include="CustomViscosity.cs" />
     <Compile Include="CustomDensity.cs" />
+    <Compile Include="ElbowData.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="MainViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
