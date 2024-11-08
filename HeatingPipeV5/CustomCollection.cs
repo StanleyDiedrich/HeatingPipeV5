@@ -147,6 +147,8 @@ namespace HeatingPipeV5
                    
                     else if (element.DetailType == CustomElement.Detail.Pipe )
                     {
+
+
                         branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
                         string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
                         element.PStat = double.Parse(pressureDropString[0], formatter);
