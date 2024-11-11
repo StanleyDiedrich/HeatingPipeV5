@@ -45,13 +45,35 @@ namespace HeatingPipeV5
             CustomDensity density = new CustomDensity();
             Density = density.GetDensity(Temperature);
             Reynolds = FlowVelocity * Diameter * 1000000 / Viscosity;
-            Lambda = GetLambda(Reynolds, Roughness);
+
+            Lambda = GetLambda(Reynolds, Roughness,Diameter);
             Pressure = Lambda / Diameter * Density * FlowVelocity * FlowVelocity / 2*Length;
         }
 
-        private double GetLambda(double reynolds, double roughness)
+        private double GetLambda(double reynolds, double roughness,double diameter)
         {
-            Lambda = 0.11 * Math.Pow((68 / reynolds + roughness / Diameter), 0.25);
+            if (reynolds<2300)
+            {
+                Lambda = 0.11 * Math.Pow((68 / reynolds + roughness / Diameter), 0.25);
+            }
+            else
+            {
+                double x = (-2 * Math.Log10(2.51 / reynolds * Math.Sqrt(1)) + (roughness / 1000) / (3.7 * diameter));
+                double x1 = Math.Pow(x, -2.0);
+                double x2 = (-2 * Math.Log10(2.51 / reynolds * Math.Sqrt(x1)) + (roughness / 1000) / (3.7 * diameter));
+                double x3 = Math.Pow(x2, -2.0);
+                double x4 = (-2 * Math.Log10(2.51 / reynolds * Math.Sqrt(x3)) + (roughness / 1000) / (3.7 * diameter));
+                double x5 = Math.Pow(x3, -2.0);
+                double x6 = (-2 * Math.Log10(2.51 / reynolds * Math.Sqrt(x5)) + (roughness / 1000) / (3.7 * diameter));
+                double x7 = Math.Pow(x6, -2.0);
+                double x8 = (-2 * Math.Log10(2.51 / reynolds * Math.Sqrt(x7)) + (roughness / 1000) / (3.7 * diameter));
+                double x9 = Math.Pow(x8, -2.0);
+                double x10 = (-2 * Math.Log10(2.51 / reynolds * Math.Sqrt(x9)) + (roughness / 1000) / (3.7 * diameter));
+                double x11 = Math.Pow(x10, -2.0);
+                Lambda = x11;
+                // Lamda= (-2 * LOG10(2, 51 / ([@24] * КОРЕНЬ(1)) + ([@13] / 1000) / (3, 7 * ([@18] / 1000)))) ^ -2
+            }
+           
             return Lambda;
         }
     }

@@ -47,6 +47,8 @@ namespace HeatingPipeV5
         public double PDyn { get; set; }
         public double PStat { get; set; }
         public double Ptot { get; set; }
+        public double Ltot { get; set; }
+        public double Lenght { get; set; }
         public enum Detail
         {
             
@@ -82,6 +84,7 @@ namespace HeatingPipeV5
         public int BranchNumber { get; set; }
         public int GroupNumber { get; set; }
         public bool MainTrack { get; set; }
+        public string RelPres { get; set; }
         private string GetValue(string primaryvolume)
         {
             // Используем регулярное выражение, чтобы найти и вернуть только числовую часть

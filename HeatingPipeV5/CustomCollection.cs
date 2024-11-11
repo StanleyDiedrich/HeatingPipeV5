@@ -120,7 +120,7 @@ namespace HeatingPipeV5
                         //CustomElbow customElbow = new CustomElbow(Document, element);
                         //element.LocRes = customElbow.LocRes;
                         //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += 15;
+                        branch.Pressure += element.PDyn;
                     }
                     else if (element.DetailType == CustomElement.Detail.Tee)
                     {
@@ -135,7 +135,7 @@ namespace HeatingPipeV5
                         //CustomTee customTee = new CustomTee(Document, element);
                         //element.LocRes = customTee.LocRes;
                         //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += 20;
+                        branch.Pressure += element.PDyn;
                     }
                     /*else if (element.DetailType == CustomElement.Detail.TapAdjustable)
                     {
@@ -167,7 +167,7 @@ namespace HeatingPipeV5
                         /*element.LocRes = customTransition.LocRes;
                         element.PDyn = Density * Math.Pow(customTransition.Velocity, 2) / 2 * element.LocRes;*/
 
-                        branch.Pressure += 5;
+                        branch.Pressure += element.PDyn;
                     }
                    
                     else if (element.DetailType == CustomElement.Detail.Pipe )
@@ -182,8 +182,12 @@ namespace HeatingPipeV5
                         element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
                         element.ModelDiameter = Convert.ToString(customPipe.Diameter * 1000);
                         element.ModelLength = Convert.ToString(Math.Round(customPipe.Length,2));
-                        element.PStat = customPipe.Pressure;
-                        branch.Pressure += customPipe.Pressure;
+                       
+                        element.PStat = Math.Round(customPipe.Pressure,2);
+                        element.RelPres = Convert.ToString(Math.Round(element.PStat / Math.Round(customPipe.Length, 2),2));
+                       branch.Pressure += customPipe.Pressure;
+                        element.Lenght += customPipe.Length;
+                        branch.Length += customPipe.Length;
 
                         /*branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
                         string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
@@ -199,7 +203,7 @@ namespace HeatingPipeV5
                         element.ModelLength = "-";
                         branch.Pressure += 0;
                     }
-                    
+                    branch.RelPressure = branch.Pressure / branch.Length;
                 }
             }
         }
@@ -208,12 +212,12 @@ namespace HeatingPipeV5
             foreach (var branch in Collection)
             {
                 branch.PBTot = 0;
-
+                branch.LTot = 0;
                 for (int i = 1; i < branch.Elements.Count; i++)
                 {
-
-                    branch.Elements[i].Ptot = branch.Elements[i].PDyn + branch.Elements[i].PStat + branch.Elements[i - 1].Ptot;
-
+                   
+                    branch.Elements[i].Ptot = Math.Round(branch.Elements[i].PDyn + branch.Elements[i].PStat + branch.Elements[i - 1].Ptot,2);
+                    branch.Elements[i].Ltot = Math.Round(branch.Elements[i].Lenght , 2)+branch.Elements[i-1].Ltot;
 
                 }
 
@@ -226,6 +230,7 @@ namespace HeatingPipeV5
             {
                 branches.Add(branch);
             }
+            //var maxbranch = branches.OrderByDescending(x => x.RelPressure).FirstOrDefault(); // добавил так как ОЦК должен быть по максимальному R/l
             var maxbranch = branches.OrderByDescending(x => x.Pressure).FirstOrDefault();
             return maxbranch;
         }
@@ -327,14 +332,14 @@ namespace HeatingPipeV5
         public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;GroupNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;KMS;PDyn;Ptot;Code;MainTrack");
+            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;GroupNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;RelPress;KMS;PDyn;Ltot;Ptot;Code;MainTrack");
 
             foreach (var branch in Collection)
             {
                 foreach (var element in branch.Elements)
                 {
                     string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.SystemName};{element.Lvl};{element.GroupNumber};{element.BranchNumber};{element.TrackNumber};" +
-                         $"{element.Volume};{element.ModelLength};{element.ModelDiameter};{element.ModelVelocity};{element.PStat};{element.LocRes};{element.PDyn};{element.Ptot};" +
+                         $"{element.Volume};{element.ModelLength};{element.ModelDiameter};{element.ModelVelocity};{element.PStat};{element.RelPres};{element.LocRes};{element.PDyn};{element.Ltot};{element.Ptot};" +
                          $"{element.SystemName}-{element.Lvl}-{element.GroupNumber}-{element.BranchNumber}-{element.TrackNumber};{element.MainTrack}";
                     csvcontent.AppendLine(a);
                 }
