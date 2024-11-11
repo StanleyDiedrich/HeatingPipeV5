@@ -95,7 +95,7 @@ namespace HeatingPipeV5
                  
                 
                 collection.Calcualate(mainViewModel.Density);
-                //collection.ResCalculate();
+                collection.ResCalculate();
                 CustomBranch selectedbranch = collection.SelectMainBranch();
                 //uIDocument.Selection.SetElementIds(selectedbranch.ShowElements());
 

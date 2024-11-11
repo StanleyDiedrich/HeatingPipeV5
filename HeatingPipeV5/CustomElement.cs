@@ -70,7 +70,9 @@ namespace HeatingPipeV5
             Manifold,
             TeeStraight,
             TeeBranch,
-            TeeMerge
+            TeeMerge,
+            Expansion,
+            Contraction
             
 
         }

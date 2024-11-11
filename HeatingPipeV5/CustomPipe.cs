@@ -23,6 +23,8 @@ namespace HeatingPipeV5
         public double Lambda { get; set; }
         public double Pressure { get; set; }
         public double Length { get; set; }
+        public string Volume { get; set; }
+        
 
         public CustomPipe (Autodesk.Revit.DB.Document document, CustomElement element)
         {
@@ -33,6 +35,7 @@ namespace HeatingPipeV5
             ElementId syselementId = (Element as MEPCurve).MEPSystem.GetTypeId();
 
             Temperature = Convert.ToDouble(Document.GetElement(syselementId).get_Parameter(BuiltInParameter.RBS_PIPE_FLUID_TEMPERATURE_PARAM).AsValueString().Split()[0]);
+            Volume = Convert.ToString(Element.get_Parameter(BuiltInParameter.RBS_PIPE_FLOW_PARAM).AsValueString().Split()[0]);
             FlowVelocity = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_VELOCITY_PARAM).AsValueString().Split()[0]);
             Roughness = Element.get_Parameter(BuiltInParameter.RBS_PIPE_ROUGHNESS_PARAM).AsDouble() * 304.8;
             Diameter = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsValueString())/1000;

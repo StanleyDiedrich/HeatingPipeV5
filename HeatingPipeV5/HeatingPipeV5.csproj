@@ -62,6 +62,7 @@
     <Compile Include="CustomElement.cs" />
     <Compile Include="CustomPipe.cs" />
     <Compile Include="CustomTee.cs" />
+    <Compile Include="CustomTransition.cs" />
     <Compile Include="CustomViscosity.cs" />
     <Compile Include="CustomDensity.cs" />
     <Compile Include="ElbowData.cs" />

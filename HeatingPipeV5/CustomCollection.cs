@@ -88,6 +88,16 @@ namespace HeatingPipeV5
                         {
                             var element2 = element;
                         }
+                       
+                        if (element.Element.LookupParameter("ADSK_Расход теплоносителя")!=null)
+                        {
+                            element.Volume = element.Element.LookupParameter("ADSK_Расход теплоносителя").AsValueString().Split()[0];
+                        }
+                        if (element.Element.LookupParameter("Расход воды") != null)
+                        {
+                            element.Volume = element.Element.LookupParameter("Расход воды").AsValueString().Split()[0];
+                        }    
+                        
                         branch.Pressure += 8000;
                         branch.Length += 0;
                         
@@ -106,6 +116,7 @@ namespace HeatingPipeV5
                         CustomElbow customElbow = new CustomElbow(Document, element);
                         element.LocRes = customElbow.LocRes;
                         element.PDyn = customElbow.PDyn;
+                        element.ModelLength = "-";
                         //CustomElbow customElbow = new CustomElbow(Document, element);
                         //element.LocRes = customElbow.LocRes;
                         //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
@@ -120,7 +131,7 @@ namespace HeatingPipeV5
                         CustomTee customTee = new CustomTee(Document, element);
                         element.LocRes = customTee.LocRes;
                         element.PDyn = customTee.PDyn;
-                       
+                        element.ModelLength = "-";
                         //CustomTee customTee = new CustomTee(Document, element);
                         //element.LocRes = customTee.LocRes;
                         //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
@@ -146,17 +157,16 @@ namespace HeatingPipeV5
                         {
                             var element2 = element;
                         }
-                        try
-                        {
-                            //CustomTransition customTransition = new CustomTransition(Document, element);
+                        
+                            CustomTransition customTransition = new CustomTransition(Document, element);
+                            element.LocRes = customTransition.LocRes;
+                            element.PDyn = customTransition.PDyn;
+                            element.ModelLength = "-";
+                        //CustomTransition customTransition = new CustomTransition(Document, element);
 
-                            /*element.LocRes = customTransition.LocRes;
-                            element.PDyn = Density * Math.Pow(customTransition.Velocity, 2) / 2 * element.LocRes;*/
-                        }
-                        catch
-                        {
-                            element.LocRes = 0.5;
-                        }
+                        /*element.LocRes = customTransition.LocRes;
+                        element.PDyn = Density * Math.Pow(customTransition.Velocity, 2) / 2 * element.LocRes;*/
+
                         branch.Pressure += 5;
                     }
                    
@@ -167,8 +177,14 @@ namespace HeatingPipeV5
                             ElementId el = element.ElementId;
                         }
                             CustomPipe customPipe = new CustomPipe(Document, element);
-                        element.Ptot = customPipe.Pressure;
+                        element.Volume = customPipe.Volume;
+                        element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
+                        element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
+                        element.ModelDiameter = Convert.ToString(customPipe.Diameter * 1000);
+                        element.ModelLength = Convert.ToString(Math.Round(customPipe.Length,2));
+                        element.PStat = customPipe.Pressure;
                         branch.Pressure += customPipe.Pressure;
+
                         /*branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
                         string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
                         element.PStat = double.Parse(pressureDropString[0], formatter);*/
@@ -179,6 +195,8 @@ namespace HeatingPipeV5
                     }
                     else if (element.DetailType == CustomElement.Detail.Union)
                     {
+                        element.ModelDiameter = "-";
+                        element.ModelLength = "-";
                         branch.Pressure += 0;
                     }
                     
@@ -309,14 +327,14 @@ namespace HeatingPipeV5
         public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;GroupNumber;BranchNumber;SectionNumber;Volume;Length;Width;Height;Diameter;HydraulicDiameter;HydraulicArea;Velocity;PStat;KMS;PDyn;Ptot;Code;MainTrack");
+            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;GroupNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;KMS;PDyn;Ptot;Code;MainTrack");
 
             foreach (var branch in Collection)
             {
                 foreach (var element in branch.Elements)
                 {
                     string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.SystemName};{element.Lvl};{element.GroupNumber};{element.BranchNumber};{element.TrackNumber};" +
-                         $"{element.Volume};{element.ModelLength};{element.ModelWidth};{element.ModelHeight};{element.ModelDiameter};{element.ModelHydraulicDiameter};{element.ModelHydraulicArea};{element.ModelVelocity};{element.PStat};{element.LocRes};{element.PDyn};{element.Ptot};" +
+                         $"{element.Volume};{element.ModelLength};{element.ModelDiameter};{element.ModelVelocity};{element.PStat};{element.LocRes};{element.PDyn};{element.Ptot};" +
                          $"{element.SystemName}-{element.Lvl}-{element.GroupNumber}-{element.BranchNumber}-{element.TrackNumber};{element.MainTrack}";
                     csvcontent.AppendLine(a);
                 }
