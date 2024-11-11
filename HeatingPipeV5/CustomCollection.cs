@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.ExtensibleStorage;
 using System.Globalization;
+using Autodesk.Revit.DB.Plumbing;
 
 namespace HeatingPipeV5
 {
@@ -89,7 +90,7 @@ namespace HeatingPipeV5
                         }
                         branch.Pressure += 8000;
                         branch.Length += 0;
-                        //Сюда допишем простую логику на воздухораспределитель по magicad
+                        
                     }
                     else if (element.DetailType == CustomElement.Detail.Elbow)
                     {
@@ -111,6 +112,9 @@ namespace HeatingPipeV5
                         {
                             var element2 = element;
                         }
+                        CustomTee customTee = new CustomTee(Document, element);
+                        element.LocRes = customTee.LocRes;
+                       
                         //CustomTee customTee = new CustomTee(Document, element);
                         //element.LocRes = customTee.LocRes;
                         //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;

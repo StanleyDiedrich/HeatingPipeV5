@@ -61,6 +61,7 @@
     <Compile Include="CustomElbow.cs" />
     <Compile Include="CustomElement.cs" />
     <Compile Include="CustomPipe.cs" />
+    <Compile Include="CustomTee.cs" />
     <Compile Include="CustomViscosity.cs" />
     <Compile Include="CustomDensity.cs" />
     <Compile Include="ElbowData.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="RelayCommand.cs" />
     <Compile Include="SystemElement.cs" />
     <Compile Include="SystemNumber.cs" />
+    <Compile Include="TeeData.cs" />
     <Compile Include="UserControl1.xaml.cs">
       <DependentUpon>UserControl1.xaml</DependentUpon>
     </Compile>

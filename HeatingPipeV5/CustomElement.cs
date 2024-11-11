@@ -67,7 +67,10 @@ namespace HeatingPipeV5
             Pipe,
             FlexPipe,
             Valve,
-            Manifold
+            Manifold,
+            TeeStraight,
+            TeeBranch,
+            TeeMerge
             
 
         }
