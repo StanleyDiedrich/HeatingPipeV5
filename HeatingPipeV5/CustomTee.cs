@@ -7,6 +7,9 @@ using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB;
 using HeatingPipeV5;
+using System.Net;
+using Autodesk.Revit.DB.ExtensibleStorage;
+using System.Runtime.Remoting.Contexts;
 
 namespace HeatingPipeV5
 {
@@ -33,33 +36,61 @@ namespace HeatingPipeV5
         public double RelA { get; set; }
         public double Angle { get; set; }
         public double Velocity { get; set; }
-
+        public double PDyn { get; set; }
+        public double Density { get; set; }
+        public double Temperature { get; set; }
         public CustomTee(Autodesk.Revit.DB.Document document, CustomElement element)
         {
+            
             Document = document;
+            if (element.Element is Pipe)
+            {
+                element.DetailType = CustomElement.Detail.Pipe;
+                CustomPipe customPipe = new CustomPipe(Document, element);
+                element.Ptot = customPipe.Pressure;
+                return;
+            }
             Element = element;
             ElementId = element.ElementId;
             SystemType = element.SystemType;
-            LocPoint = ((element.Element.Location) as LocationPoint).Point;
+            
 
-            Parameter dn1 = null;
-            Parameter dn2 = null;
-            Parameter dn3 = null;
-            foreach (Parameter parameter in Element.Element.Parameters)
+           /* Parameter dn1 = element.Element.LookupParameter("Условный диаметр_1");
+            Parameter dn2 = element.Element.LookupParameter("Условный диаметр_2");
+            Parameter dn3 = element.Element.LookupParameter("Условный диаметр_1");
+
+            if (dn1 == null)
             {
-                if (parameter.Id.IntegerValue == 2302147)
+                foreach (Parameter parameter in Element.Element.Parameters)
                 {
-                    dn1 = parameter;
-                }
-                else if (parameter.Id.IntegerValue ==2302162)
-                {
-                    dn2 = parameter;
-                }
-                else if (parameter.Id.IntegerValue == 2302163 )
-                {
-                    dn3 = parameter;
+                    if (parameter.Id.IntegerValue == 2302147)
+                    {
+                        dn1 = parameter;
+                    }
                 }
             }
+
+            if (dn2 ==null)
+            {
+                foreach (Parameter parameter in Element.Element.Parameters)
+                {
+                      if (parameter.Id.IntegerValue == 2302162 )
+                    {
+                        dn2 = parameter;
+                    }
+                }
+            }
+            if (dn3 == null)
+            {
+                foreach (Parameter parameter in Element.Element.Parameters)
+                {
+                    if (parameter.Id.IntegerValue == 2302163)
+                    {
+                        dn3 = parameter;
+                    }
+                }
+            }*/
+            
 
 
 
@@ -67,16 +98,18 @@ namespace HeatingPipeV5
 
 
             //double length = 0;
-            double diameter1 = Convert.ToDouble(dn1.AsValueString());
+          /*  double diameter1 = Convert.ToDouble(dn1.AsValueString());
             double diameter3 = Convert.ToDouble(dn2.AsValueString());
-            double diameter = Convert.ToDouble(dn3.AsValueString());
+            double diameter = Convert.ToDouble(dn3.AsValueString());*/
 
 
             if (document.GetElement(ElementId) is FamilyInstance)
             {
+                ElementId syselementId = null;
+                LocPoint = ((element.Element.Location) as LocationPoint).Point;
                 foreach (Connector connector in Element.OwnConnectors)
                 {
-                    if (connector.Domain != Domain.DomainHvac)
+                    if (connector.Domain == Domain.DomainUndefined)
                     {
                         continue;
                     }
@@ -86,7 +119,7 @@ namespace HeatingPipeV5
 
                         foreach (Connector connect in nextconnectors)
                         {
-                            if (connect.Domain != Domain.DomainHvac)
+                            if (connect.Domain == Domain.DomainUndefined)
                             {
                                 continue;
                             }
@@ -146,7 +179,14 @@ namespace HeatingPipeV5
                                             custom.PressureDrop = connect.PressureDrop; // Вот это добавлено в версии 4.1
                                             InletConnector = custom;
                                             InletConnector.AInlet = custom.Area;
-
+                                            try
+                                            {
+                                                syselementId = (connect.MEPSystem as PipingSystem).GetTypeId();
+                                                Temperature = Convert.ToDouble(Document.GetElement(syselementId).get_Parameter(BuiltInParameter.RBS_PIPE_FLUID_TEMPERATURE_PARAM).AsValueString().Split()[0]);
+                                            
+                                            }
+                                            catch
+                                            { }
                                             //SecondaryConnectors.Add(custom);
                                         }
                                         if (connect.Direction == FlowDirectionType.In)
@@ -218,6 +258,13 @@ namespace HeatingPipeV5
                                             custom.Origin = connect.Origin;
                                             InletConnector = custom;
                                             InletConnector.AInlet = custom.Area;
+                                            try
+                                            {
+                                                syselementId = (connect.MEPSystem as PipingSystem).GetTypeId();
+                                                Temperature = Convert.ToDouble(Document.GetElement(syselementId).get_Parameter(BuiltInParameter.RBS_PIPE_FLUID_TEMPERATURE_PARAM).AsValueString().Split()[0]);
+                                            }
+                                            catch
+                                            { }
                                             //SecondaryConnectors.Add(custom);
                                         }
                                         else
@@ -320,9 +367,14 @@ namespace HeatingPipeV5
                 Element.DetailType = CustomElement.Detail.TeeMerge;
             }
 
+           
+           
 
+            CustomDensity density = new CustomDensity();
 
-
+            Density = density.GetDensity(Temperature);
+            
+            PDyn = Density *InletConnector.Velocity * InletConnector.Velocity / 2 * LocRes;
 
 
         }

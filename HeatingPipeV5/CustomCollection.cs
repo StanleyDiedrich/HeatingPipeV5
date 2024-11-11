@@ -92,6 +92,11 @@ namespace HeatingPipeV5
                         branch.Length += 0;
                         
                     }
+                    else if (element.OwnConnectors.Size > 3)
+                    {
+                        element.DetailType = CustomElement.Detail.Manifold;
+                        branch.Pressure += 5000;
+                    }
                     else if (element.DetailType == CustomElement.Detail.Elbow)
                     {
                         if (element.ElementId.IntegerValue == 2794589)
@@ -114,6 +119,7 @@ namespace HeatingPipeV5
                         }
                         CustomTee customTee = new CustomTee(Document, element);
                         element.LocRes = customTee.LocRes;
+                        element.PDyn = customTee.PDyn;
                        
                         //CustomTee customTee = new CustomTee(Document, element);
                         //element.LocRes = customTee.LocRes;
@@ -175,11 +181,7 @@ namespace HeatingPipeV5
                     {
                         branch.Pressure += 0;
                     }
-                    else if (element.OwnConnectors.Size>2)
-                    {
-                        element.DetailType = CustomElement.Detail.Manifold;
-                        branch.Pressure += 5000;
-                    }
+                    
                 }
             }
         }
