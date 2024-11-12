@@ -151,7 +151,7 @@ namespace HeatingPipeV5
 
                                         if (connect.Direction == FlowDirectionType.Out)
                                         {
-                                            custom.Flow = connect.Flow;
+                                            custom.Flow = connect.Flow * 101.8;
                                             custom.Domain = Domain.DomainHvac;
                                             //custom.DirectionType = FlowDirectionType.Out;
                                             custom.NextOwnerId = connect.Owner.Id;
@@ -162,7 +162,7 @@ namespace HeatingPipeV5
                                                 ProfileType = ConnectorProfileType.Round;
                                                 custom.Diameter = connect.Radius * 2 * 304.8;
                                                 custom.EquiDiameter = custom.Diameter;
-                                                custom.Area = Math.PI * Math.Pow(custom.Diameter, 2) / 4;
+                                                custom.Area = Math.PI * Math.Pow(custom.Diameter / 1000, 2) / 4;
                                                 custom.Velocity = custom.Flow / (custom.Area * 3600);
                                             }
                                            /* else
@@ -191,7 +191,7 @@ namespace HeatingPipeV5
                                         }
                                         if (connect.Direction == FlowDirectionType.In)
                                         {
-                                            custom.Flow = connect.Flow;
+                                            custom.Flow = connect.Flow * 101.8;
                                             custom.Domain = Domain.DomainHvac;
                                             //custom.DirectionType = FlowDirectionType.Out;
                                             custom.NextOwnerId = connect.Owner.Id;
@@ -202,7 +202,7 @@ namespace HeatingPipeV5
                                                 ProfileType = ConnectorProfileType.Round;
                                                 custom.Diameter = connect.Radius * 2 * 304.8;
                                                 custom.EquiDiameter = custom.Diameter;
-                                                custom.Area = Math.PI * Math.Pow(custom.Diameter, 2) / 4;
+                                                custom.Area = Math.PI * Math.Pow(custom.Diameter / 1000, 2) / 4;
                                                 custom.Velocity = custom.Flow / (custom.Area * 3600);
 
                                             }
@@ -230,7 +230,7 @@ namespace HeatingPipeV5
                                     {
                                         if (connect.Direction == FlowDirectionType.In)
                                         {
-                                            custom.Flow = connect.Flow;
+                                            custom.Flow = connect.Flow * 101.8;
                                             custom.Domain = Domain.DomainHvac;
                                             //custom.DirectionType = FlowDirectionType.In;
                                             custom.NextOwnerId = connect.Owner.Id;
@@ -241,7 +241,7 @@ namespace HeatingPipeV5
                                                 ProfileType = ConnectorProfileType.Round;
                                                 custom.Diameter = connect.Radius * 2 * 304.8;
                                                 custom.EquiDiameter = custom.Diameter;
-                                                custom.Area = Math.PI * Math.Pow(custom.Diameter, 2) / 4;
+                                                custom.Area = Math.PI * Math.Pow(custom.Diameter / 1000, 2) / 4;
                                                 custom.Velocity = custom.Flow / (custom.Area * 3600);
 
                                             }
@@ -269,7 +269,7 @@ namespace HeatingPipeV5
                                         }
                                         else
                                         {
-                                            custom.Flow = connect.Flow;
+                                            custom.Flow = connect.Flow * 101.8;
                                             custom.Domain = Domain.DomainHvac;
                                             //custom.DirectionType = FlowDirectionType.In;
                                             custom.NextOwnerId = connect.Owner.Id;
@@ -280,7 +280,7 @@ namespace HeatingPipeV5
                                                 ProfileType = ConnectorProfileType.Round;
                                                 custom.Diameter = connect.Radius * 2 * 304.8;
                                                 custom.EquiDiameter = custom.Diameter;
-                                                custom.Area = Math.PI * Math.Pow(custom.Diameter, 2) / 4;
+                                                custom.Area = Math.PI * Math.Pow(custom.Diameter / 1000, 2) / 4;
                                                 custom.Velocity = custom.Flow / (custom.Area * 3600);
 
                                             }
@@ -341,15 +341,15 @@ namespace HeatingPipeV5
                 StraightTee(InletConnector, OutletConnector1, OutletConnector2);
             }
             //Допиши сюда что может быть на отвод
-            double relA;
-            double relQ;
-            double relC;
+            double relA = OutletConnector1.Diameter / InletConnector.Diameter;
+            double relQ = OutletConnector1.Flow / InletConnector.Flow;
+           
 
 
 
-            TeeData teeData = new TeeData(SystemType, OutletConnector1.IsStraight, InletConnector.Diameter);
+            TeeData teeData = new TeeData(element.ElementName,SystemType, OutletConnector1.IsStraight, InletConnector.Diameter, relA, relQ);
 
-            LocRes = teeData.GetLocRes(InletConnector.Diameter);
+            LocRes = teeData.GetLocRes();
             if (SystemType == PipeSystemType.SupplyHydronic && OutletConnector1.IsStraight == true)
             {
                 Element.DetailType = CustomElement.Detail.TeeStraight;

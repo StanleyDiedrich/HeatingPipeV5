@@ -105,6 +105,7 @@ namespace HeatingPipeV5
                     else if (element.OwnConnectors.Size > 3)
                     {
                         element.DetailType = CustomElement.Detail.Manifold;
+                        element.LocRes = 1.1;
                         branch.Pressure += 5000;
                     }
                     else if (element.DetailType == CustomElement.Detail.Elbow)
@@ -128,14 +129,38 @@ namespace HeatingPipeV5
                         {
                             var element2 = element;
                         }
-                        CustomTee customTee = new CustomTee(Document, element);
-                        element.LocRes = customTee.LocRes;
-                        element.PDyn = customTee.PDyn;
-                        element.ModelLength = "-";
-                        //CustomTee customTee = new CustomTee(Document, element);
-                        //element.LocRes = customTee.LocRes;
-                        //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += element.PDyn;
+                        if (element.Element is Pipe)
+                        {
+                            element.DetailType = CustomElement.Detail.Pipe;
+                            CustomPipe customPipe = new CustomPipe(Document, element);
+                            element.Volume = customPipe.Volume;
+                            element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
+                            element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
+                            element.ModelDiameter = Convert.ToString(customPipe.Diameter * 1000);
+                            element.ModelLength = Convert.ToString(Math.Round(customPipe.Length, 2));
+
+                            element.PStat = Math.Round(customPipe.Pressure, 2);
+                            element.RelPres = Convert.ToString(Math.Round(element.PStat / Math.Round(customPipe.Length, 2), 2));
+                            branch.Pressure += customPipe.Pressure;
+                            element.Lenght += customPipe.Length;
+                            branch.Length += customPipe.Length;
+                        }
+                        else
+                        {
+                            CustomTee customTee = new CustomTee(Document, element);
+                            element.LocRes = customTee.LocRes;
+                            element.PDyn = customTee.PDyn;
+                            element.ModelLength = "-";
+                            element.Volume = String.Join("-", Math.Round(customTee.InletConnector.Flow,2),
+                                         Math.Round(customTee.OutletConnector1.Flow,2),
+                                         Math.Round(customTee.OutletConnector2.Flow,2));
+                            element.ModelVelocity = String.Join("-", Math.Round(customTee.InletConnector.Velocity,2), Math.Round(customTee.OutletConnector1.Velocity,2), Math.Round(customTee.OutletConnector2.Velocity,2));
+                            //CustomTee customTee = new CustomTee(Document, element);
+                            //element.LocRes = customTee.LocRes;
+                            //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
+                            branch.Pressure += element.PDyn;
+                        }
+                        
                     }
                     /*else if (element.DetailType == CustomElement.Detail.TapAdjustable)
                     {
@@ -172,7 +197,7 @@ namespace HeatingPipeV5
                    
                     else if (element.DetailType == CustomElement.Detail.Pipe )
                     {
-                        if (element.ElementId.IntegerValue == 2808562)
+                        if (element.ElementId.IntegerValue == 2795076)
                         {
                             ElementId el = element.ElementId;
                         }
