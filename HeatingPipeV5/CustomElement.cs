@@ -27,7 +27,7 @@ namespace HeatingPipeV5
         public string ShortSystemName { get; set; }
         public string Lvl { get; set; }
         public PipeSystemType SystemType { get; set; }
-
+       
         public CustomConnector SelectedConnector { get; set; }
         public CustomConnector SupplyConnector { get; set; }
         public CustomConnector ReturnConnector { get; set; }
@@ -47,6 +47,8 @@ namespace HeatingPipeV5
         public double PDyn { get; set; }
         public double PStat { get; set; }
         public double Ptot { get; set; }
+        public double Ltot { get; set; }
+        public double Lenght { get; set; }
         public enum Detail
         {
             
@@ -67,7 +69,12 @@ namespace HeatingPipeV5
             Pipe,
             FlexPipe,
             Valve,
-            Manifold
+            Manifold,
+            TeeStraight,
+            TeeBranch,
+            TeeMerge,
+            Expansion,
+            Contraction
             
 
         }
@@ -77,6 +84,7 @@ namespace HeatingPipeV5
         public int BranchNumber { get; set; }
         public int GroupNumber { get; set; }
         public bool MainTrack { get; set; }
+        public string RelPres { get; set; }
         private string GetValue(string primaryvolume)
         {
             // Используем регулярное выражение, чтобы найти и вернуть только числовую часть

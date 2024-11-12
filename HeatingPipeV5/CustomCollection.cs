@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.ExtensibleStorage;
 using System.Globalization;
+using Autodesk.Revit.DB.Plumbing;
 
 namespace HeatingPipeV5
 {
@@ -87,18 +88,40 @@ namespace HeatingPipeV5
                         {
                             var element2 = element;
                         }
+                       
+                        if (element.Element.LookupParameter("ADSK_Расход теплоносителя")!=null)
+                        {
+                            element.Volume = element.Element.LookupParameter("ADSK_Расход теплоносителя").AsValueString().Split()[0];
+                        }
+                        if (element.Element.LookupParameter("Расход воды") != null)
+                        {
+                            element.Volume = element.Element.LookupParameter("Расход воды").AsValueString().Split()[0];
+                        }    
+                        
                         branch.Pressure += 8000;
                         branch.Length += 0;
-                        //Сюда допишем простую логику на воздухораспределитель по magicad
+                        
+                    }
+                    else if (element.OwnConnectors.Size > 3)
+                    {
+                        element.DetailType = CustomElement.Detail.Manifold;
+                        element.LocRes = 1.1;
+                        branch.Pressure += 5000;
                     }
                     else if (element.DetailType == CustomElement.Detail.Elbow)
                     {
-
-                       
+                        if (element.ElementId.IntegerValue == 2794589)
+                        {
+                            var element2 = element;
+                        }
+                        CustomElbow customElbow = new CustomElbow(Document, element);
+                        element.LocRes = customElbow.LocRes;
+                        element.PDyn = customElbow.PDyn;
+                        element.ModelLength = "-";
                         //CustomElbow customElbow = new CustomElbow(Document, element);
                         //element.LocRes = customElbow.LocRes;
                         //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += 15;
+                        branch.Pressure += element.PDyn;
                     }
                     else if (element.DetailType == CustomElement.Detail.Tee)
                     {
@@ -106,10 +129,38 @@ namespace HeatingPipeV5
                         {
                             var element2 = element;
                         }
-                        //CustomTee customTee = new CustomTee(Document, element);
-                        //element.LocRes = customTee.LocRes;
-                        //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
-                        branch.Pressure += 20;
+                        if (element.Element is Pipe)
+                        {
+                            element.DetailType = CustomElement.Detail.Pipe;
+                            CustomPipe customPipe = new CustomPipe(Document, element);
+                            element.Volume = customPipe.Volume;
+                            element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
+                            element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
+                            element.ModelDiameter = Convert.ToString(customPipe.Diameter * 1000);
+                            element.ModelLength = Convert.ToString(Math.Round(customPipe.Length, 2));
+
+                            element.PStat = Math.Round(customPipe.Pressure, 2);
+                            element.RelPres = Convert.ToString(Math.Round(element.PStat / Math.Round(customPipe.Length, 2), 2));
+                            branch.Pressure += customPipe.Pressure;
+                            element.Lenght += customPipe.Length;
+                            branch.Length += customPipe.Length;
+                        }
+                        else
+                        {
+                            CustomTee customTee = new CustomTee(Document, element);
+                            element.LocRes = customTee.LocRes;
+                            element.PDyn = customTee.PDyn;
+                            element.ModelLength = "-";
+                            element.Volume = String.Join("-", Math.Round(customTee.InletConnector.Flow,2),
+                                         Math.Round(customTee.OutletConnector1.Flow,2),
+                                         Math.Round(customTee.OutletConnector2.Flow,2));
+                            element.ModelVelocity = String.Join("-", Math.Round(customTee.InletConnector.Velocity,2), Math.Round(customTee.OutletConnector1.Velocity,2), Math.Round(customTee.OutletConnector2.Velocity,2));
+                            //CustomTee customTee = new CustomTee(Document, element);
+                            //element.LocRes = customTee.LocRes;
+                            //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
+                            branch.Pressure += element.PDyn;
+                        }
+                        
                     }
                     /*else if (element.DetailType == CustomElement.Detail.TapAdjustable)
                     {
@@ -131,25 +182,41 @@ namespace HeatingPipeV5
                         {
                             var element2 = element;
                         }
-                        try
-                        {
-                            //CustomTransition customTransition = new CustomTransition(Document, element);
+                        
+                            CustomTransition customTransition = new CustomTransition(Document, element);
+                            element.LocRes = customTransition.LocRes;
+                            element.PDyn = customTransition.PDyn;
+                            element.ModelLength = "-";
+                        //CustomTransition customTransition = new CustomTransition(Document, element);
 
-                            /*element.LocRes = customTransition.LocRes;
-                            element.PDyn = Density * Math.Pow(customTransition.Velocity, 2) / 2 * element.LocRes;*/
-                        }
-                        catch
-                        {
-                            element.LocRes = 0.5;
-                        }
-                        branch.Pressure += 5;
+                        /*element.LocRes = customTransition.LocRes;
+                        element.PDyn = Density * Math.Pow(customTransition.Velocity, 2) / 2 * element.LocRes;*/
+
+                        branch.Pressure += element.PDyn;
                     }
                    
                     else if (element.DetailType == CustomElement.Detail.Pipe )
                     {
-                        branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
+                        if (element.ElementId.IntegerValue == 2795076)
+                        {
+                            ElementId el = element.ElementId;
+                        }
+                            CustomPipe customPipe = new CustomPipe(Document, element);
+                        element.Volume = customPipe.Volume;
+                        element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
+                        element.ModelVelocity = Convert.ToString(customPipe.FlowVelocity);
+                        element.ModelDiameter = Convert.ToString(customPipe.Diameter * 1000);
+                        element.ModelLength = Convert.ToString(Math.Round(customPipe.Length,2));
+                       
+                        element.PStat = Math.Round(customPipe.Pressure,2);
+                        element.RelPres = Convert.ToString(Math.Round(element.PStat / Math.Round(customPipe.Length, 2),2));
+                       branch.Pressure += customPipe.Pressure;
+                        element.Lenght += customPipe.Length;
+                        branch.Length += customPipe.Length;
+
+                        /*branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
                         string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
-                        element.PStat = double.Parse(pressureDropString[0], formatter);
+                        element.PStat = double.Parse(pressureDropString[0], formatter);*/
                     }
                     else if (element.DetailType == CustomElement.Detail.Valve)
                     {
@@ -157,13 +224,11 @@ namespace HeatingPipeV5
                     }
                     else if (element.DetailType == CustomElement.Detail.Union)
                     {
+                        element.ModelDiameter = "-";
+                        element.ModelLength = "-";
                         branch.Pressure += 0;
                     }
-                    else if (element.OwnConnectors.Size>2)
-                    {
-                        element.DetailType = CustomElement.Detail.Manifold;
-                        branch.Pressure += 5000;
-                    }
+                    branch.RelPressure = branch.Pressure / branch.Length;
                 }
             }
         }
@@ -172,12 +237,12 @@ namespace HeatingPipeV5
             foreach (var branch in Collection)
             {
                 branch.PBTot = 0;
-
+                branch.LTot = 0;
                 for (int i = 1; i < branch.Elements.Count; i++)
                 {
-
-                    branch.Elements[i].Ptot = branch.Elements[i].PDyn + branch.Elements[i].PStat + branch.Elements[i - 1].Ptot;
-
+                   
+                    branch.Elements[i].Ptot = Math.Round(branch.Elements[i].PDyn + branch.Elements[i].PStat + branch.Elements[i - 1].Ptot,2);
+                    branch.Elements[i].Ltot = Math.Round(branch.Elements[i].Lenght , 2)+branch.Elements[i-1].Ltot;
 
                 }
 
@@ -190,6 +255,7 @@ namespace HeatingPipeV5
             {
                 branches.Add(branch);
             }
+            //var maxbranch = branches.OrderByDescending(x => x.RelPressure).FirstOrDefault(); // добавил так как ОЦК должен быть по максимальному R/l
             var maxbranch = branches.OrderByDescending(x => x.Pressure).FirstOrDefault();
             return maxbranch;
         }
@@ -291,14 +357,14 @@ namespace HeatingPipeV5
         public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;GroupNumber;BranchNumber;SectionNumber;Volume;Length;Width;Height;Diameter;HydraulicDiameter;HydraulicArea;Velocity;PStat;KMS;PDyn;Ptot;Code;MainTrack");
+            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;GroupNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;RelPress;KMS;PDyn;Ltot;Ptot;Code;MainTrack");
 
             foreach (var branch in Collection)
             {
                 foreach (var element in branch.Elements)
                 {
                     string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.SystemName};{element.Lvl};{element.GroupNumber};{element.BranchNumber};{element.TrackNumber};" +
-                         $"{element.Volume};{element.ModelLength};{element.ModelWidth};{element.ModelHeight};{element.ModelDiameter};{element.ModelHydraulicDiameter};{element.ModelHydraulicArea};{element.ModelVelocity};{element.PStat};{element.LocRes};{element.PDyn};{element.Ptot};" +
+                         $"{element.Volume};{element.ModelLength};{element.ModelDiameter};{element.ModelVelocity};{element.PStat};{element.RelPres};{element.LocRes};{element.PDyn};{element.Ltot};{element.Ptot};" +
                          $"{element.SystemName}-{element.Lvl}-{element.GroupNumber}-{element.BranchNumber}-{element.TrackNumber};{element.MainTrack}";
                     csvcontent.AppendLine(a);
                 }

@@ -19,6 +19,7 @@ namespace HeatingPipeV5
         public double Length { get; set; }
 
         public double RelPressure { get; set; }
+        public double LTot { get; set; }
         public double PBTot { get; set; }
         public List<CustomElement> Elements { get; set; } = new List<CustomElement>();
         public CustomBranch(Autodesk.Revit.DB.Document document, ElementId elementId)
