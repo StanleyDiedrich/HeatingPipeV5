@@ -12,6 +12,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.ExtensibleStorage;
 using System.Globalization;
 using Autodesk.Revit.DB.Plumbing;
+using Autodesk.Revit.DB.Structure;
 
 namespace HeatingPipeV5
 {
@@ -83,7 +84,7 @@ namespace HeatingPipeV5
             Density = density;
             foreach (var branch in Collection)
             {
-                if (branch.Elements.Count==0 || branch==null)
+                if (branch.Elements.Count == 0 || branch == null)
                 { continue; }
                 try
                 {
@@ -253,9 +254,9 @@ namespace HeatingPipeV5
                 branch.LTot = 0;
                 for (int i = 1; i < branch.Elements.Count; i++)
                 {
-                   
-                    branch.Elements[i].Ptot = Math.Round(branch.Elements[i].PDyn + branch.Elements[i].PStat + branch.Elements[i - 1].Ptot,2);
-                    branch.Elements[i].Ltot = Math.Round(branch.Elements[i].Lenght , 2)+branch.Elements[i-1].Ltot;
+
+                    branch.Elements[i].Ptot = Math.Round(branch.Elements[i].PDyn + branch.Elements[i].PStat + branch.Elements[i - 1].Ptot, 2);
+                    branch.Elements[i].Ltot = Math.Round(branch.Elements[i].Lenght, 2) + branch.Elements[i - 1].Ltot;
 
                 }
 
@@ -273,74 +274,280 @@ namespace HeatingPipeV5
             return maxbranch;
         }
 
+
         public void MarkCollection(CustomBranch customBranch)
         {
             List<CustomBranch> newCustomCollection = new List<CustomBranch>();
             HashSet<ElementId> checkedElements = new HashSet<ElementId>();
 
-           
-
-
-
-            // Сначала обрабатываем основную ветвь 
             foreach (var branch in Collection)
             {
+                var controlelement = branch.Elements.First().ElementId;
+                CustomElement previouselement = null;
+                int groupnumber2 = 1;
                 if (branch.Number == customBranch.Number)
                 {
+
                     int trackCounter = 0;
-                    
-                    foreach (var element in branch.Elements)
+                    int levelCounter = 1;
+                    for (int i = 0; i < branch.Elements.Count; i++)
                     {
-                        element.GroupNumber = 0;
-                        element.TrackNumber = trackCounter;
-                        element.BranchNumber = branch.Number;
+                        //var previouselement = branch.Elements[i-1];
+                        var element = branch.Elements[i];
                         element.MainTrack = true;
-                        checkedElements.Add(element.ElementId);
-                        trackCounter++;
+                        if (element.LevelNumber == 0)
+                        {
+                            element.LevelNumber = levelCounter;
+                        }
+
+                        if (element.ElementId.IntegerValue == 4241799)
+                        {
+                            var element2 = element;
+                        }
+
+                        if (previouselement != null)
+                        {
+                            if (previouselement.DetailType == CustomElement.Detail.Pipe && element.DetailType == CustomElement.Detail.Pipe)
+                            {
+                                if (previouselement.Volume == element.Volume)
+                                {
+                                    double d1 = Convert.ToDouble(previouselement.ModelDiameter);
+                                    double d2 = Convert.ToDouble(element.ModelDiameter);
+                                    if (d1 == d2)
+                                    {
+                                        element.TrackNumber = trackCounter;
+                                        element.BranchNumber = branch.Number;
+                                        element.LevelNumber = levelCounter;
+                                        //branch.Add(element);
+                                        checkedElements.Add(element.ElementId);
+                                    }
+                                }
+                                else
+                                {
+                                    element.TrackNumber = trackCounter;
+                                    element.BranchNumber = branch.Number;
+                                    element.LevelNumber = levelCounter;
+                                    //branch.Add(element);
+                                    checkedElements.Add(element.ElementId);
+                                    trackCounter++;
+
+                                }
+                            }
+                            else if (element.DetailType == CustomElement.Detail.Manifold)
+                            {
+                                trackCounter = 0;
+                                element.TrackNumber = 0;
+                                element.BranchNumber = branch.Number;
+                                levelCounter *= 10;
+                                element.LevelNumber *= levelCounter;
+                                //branch.Add(element);
+                                checkedElements.Add(element.ElementId);
+
+                                //trackCounter++;
+                            }
+                            else
+                            {
+                                element.TrackNumber = trackCounter;
+                                element.BranchNumber = branch.Number;
+                                element.LevelNumber = levelCounter;
+                                //branch.Add(element);
+                                checkedElements.Add(element.ElementId);
+                            }
+                        }
+
+
+                        if (element.DetailType == CustomElement.Detail.Pipe)
+                        {
+                            previouselement = element;
+                        }
+
                     }
+
                     newCustomCollection.Add(branch);
-                    break; // Прекращаем дальнейший обход после нахождения основной ветви 
+                    break;
                 }
             }
+
+
             
-            // Обрабатываем остальные ветви 
-            foreach (var branch in Collection)
-            {
-                if (branch.Number == customBranch.Number)
+                CustomElement previouselement2 = null;
+                foreach (var branch in Collection)
                 {
-                    continue;
-                }
-
-                CustomBranch newCustomBranch = new CustomBranch(Document);
-                int trackCounter = 0;
-
-                foreach (var element in branch.Elements)
-                {
-                    // Если элемент уже есть в основной ветви, пропускаем его 
-                    if (checkedElements.Contains(element.ElementId))
+                    if (branch.Number == customBranch.Number)
                     {
                         continue;
                     }
 
-                    // Устанавливаем номера и добавляем элемент в новую ветвь 
-                    element.TrackNumber = trackCounter;
-                    element.BranchNumber = branch.Number;
-                    newCustomBranch.Add(element);
-                    checkedElements.Add(element.ElementId);
-                    trackCounter++;  // Увеличиваем trackCounter только после успешного добавления элемента
+                    else
+                    {
+                        int trackCounter = 0;
+                        int levelCounter = 1;
+                        for (int i = 0; i < branch.Elements.Count; i++)
+                        {
+
+                            //var previouselement = branch.Elements[i-1];
+                            var element = branch.Elements[i];
+                            if (checkedElements.Contains(element.ElementId))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                if (element.LevelNumber == 0)
+                                {
+                                    element.LevelNumber = levelCounter;
+                                }
+
+                                if (element.ElementId.IntegerValue == 4241799)
+                                {
+                                    var element2 = element;
+                                }
+                                if (previouselement2 != null)
+                                {
+                                    if (previouselement2.DetailType == CustomElement.Detail.Pipe && element.DetailType == CustomElement.Detail.Pipe)
+                                    {
+                                        if (previouselement2.Volume == element.Volume)
+                                        {
+                                            double d1 = Convert.ToDouble(previouselement2.ModelDiameter);
+                                            double d2 = Convert.ToDouble(element.ModelDiameter);
+                                            if (d1 == d2)
+                                            {
+                                                element.TrackNumber = trackCounter;
+                                                element.BranchNumber = branch.Number;
+                                                element.LevelNumber = levelCounter;
+
+                                                //branch.Add(element);
+                                                checkedElements.Add(element.ElementId);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            element.TrackNumber = trackCounter;
+                                            element.BranchNumber = branch.Number;
+                                            element.LevelNumber = levelCounter;
+
+                                            //branch.Add(element);
+                                            checkedElements.Add(element.ElementId);
+                                            trackCounter++;
+
+                                        }
+                                    }
+                                    else if (element.DetailType == CustomElement.Detail.Manifold)
+                                    {
+                                        trackCounter = 0;
+                                        element.TrackNumber = 0;
+                                        element.BranchNumber = branch.Number;
+
+                                        levelCounter *= 10;
+                                        element.LevelNumber *= levelCounter;
+                                        //branch.Add(element);
+                                        checkedElements.Add(element.ElementId);
+
+                                        //trackCounter++;
+                                    }
+                                    else
+                                    {
+                                        element.TrackNumber = trackCounter;
+                                        element.BranchNumber = branch.Number;
+                                        element.LevelNumber = levelCounter;
+
+                                        //branch.Add(element);
+                                        checkedElements.Add(element.ElementId);
+                                    }
+                                }
+
+
+                                if (element.DetailType == CustomElement.Detail.Pipe)
+                                {
+                                    previouselement2 = element;
+                                }
+
+                            }
+
+                        }
+                    }
+
+                    newCustomCollection.Add(branch);
                 }
 
-                newCustomCollection.Add(newCustomBranch);
-            }
-            int groupnumber = 0;
+            var uniqueElements = new HashSet<ElementId>();
+
             foreach (var branch in newCustomCollection)
+            {
+                // Создание новой коллекции для хранения уникальных элементов
+                var uniqueBranchElements = new List<CustomElement>();
+
+                foreach (var element in branch.Elements)
+                {
+                    // Проверка на уникальность ElementId
+                    if (uniqueElements.Add(element.ElementId))
+                    {
+                        uniqueBranchElements.Add(element);
+                    }
+                }
+
+                // Обновление ветки, оставляя только уникальные элементы
+                branch.Elements = uniqueBranchElements;
+            }
+            Collection = newCustomCollection;
+        }
+
+
+
+
+         
+
+            
+
+            
+            /*int groupnumber = 0;
+            var pipe = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment).First();
+            string sysname = pipe.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
+            string sysname1 = sysname.Split(',')[0];
+            string sysname2 = sysname.Split(',')[1];
+
+            foreach (var branch2 in newCustomCollection)
+            {
+                foreach (var element in branch2.Elements)
+                {
+                    if (element.DetailType == CustomElement.Detail.Manifold)
+                    {
+                        continue;
+                    }
+                    else if (element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname1) || element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname2))
+                    {
+                        element.GroupNumber = groupnumber;
+                    }
+                    if (element.BranchNumber == customBranch.Number)
+                    {
+                        element.GroupNumber = groupnumber;
+                    }
+                }
+            }
+            groupnumber++;*/
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+            /*//int groupnumber = 0;
+            foreach (var branch in Collection)
             {
                 var pipe = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment).First();
                 string sysname = pipe.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
                 string sysname1 = sysname.Split(',')[0];
                 string sysname2 = sysname.Split(',')[1];
 
-                foreach (var branch2 in newCustomCollection)
+                foreach (var branch2 in Collection)
                 {
                     foreach (var element in branch2.Elements)
                     {
@@ -352,7 +559,7 @@ namespace HeatingPipeV5
                         {
                             element.GroupNumber = groupnumber;
                         }
-                         if (element.BranchNumber==customBranch.Number)
+                        if (element.BranchNumber == customBranch.Number)
                         {
                             element.GroupNumber = groupnumber;
                         }
@@ -360,25 +567,128 @@ namespace HeatingPipeV5
                 }
                 groupnumber++;
 
-            }
-            // Обновляем коллекцию 
-            Collection = newCustomCollection;
-        }
+            }*/
 
 
 
-        public string GetContent()
+
+
+
+
+
+
+
+
+            /*public void MarkCollection(CustomBranch customBranch)
+            {
+                List<CustomBranch> newCustomCollection = new List<CustomBranch>();
+                HashSet<ElementId> checkedElements = new HashSet<ElementId>();
+
+
+
+
+
+                // Сначала обрабатываем основную ветвь 
+                foreach (var branch in Collection)
+                {
+                    if (branch.Number == customBranch.Number)
+                    {
+                        int trackCounter = 0;
+
+                        foreach (var element in branch.Elements)
+                        {
+                            element.GroupNumber = 0;
+                            element.TrackNumber = trackCounter;
+                            element.BranchNumber = branch.Number;
+                            element.MainTrack = true;
+                            checkedElements.Add(element.ElementId);
+                            trackCounter++;
+                        }
+                        newCustomCollection.Add(branch);
+                        break; // Прекращаем дальнейший обход после нахождения основной ветви 
+                    }
+                }
+
+                // Обрабатываем остальные ветви 
+                foreach (var branch in Collection)
+                {
+                    if (branch.Number == customBranch.Number)
+                    {
+                        continue;
+                    }
+
+                    CustomBranch newCustomBranch = new CustomBranch(Document);
+                    int trackCounter = 0;
+
+                    foreach (var element in branch.Elements)
+                    {
+                        // Если элемент уже есть в основной ветви, пропускаем его 
+                        if (checkedElements.Contains(element.ElementId))
+                        {
+                            continue;
+                        }
+
+                        // Устанавливаем номера и добавляем элемент в новую ветвь 
+                        element.TrackNumber = trackCounter;
+                        element.BranchNumber = branch.Number;
+                        newCustomBranch.Add(element);
+                        checkedElements.Add(element.ElementId);
+                        trackCounter++;  // Увеличиваем trackCounter только после успешного добавления элемента
+                    }
+
+                    newCustomCollection.Add(newCustomBranch);
+                }
+                int levelnumber = 1;
+                int groupnumber = 0;
+                foreach (var branch in newCustomCollection)
+                {
+                    var pipe = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment).First();
+                    string sysname = pipe.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
+                    string sysname1 = sysname.Split(',')[0];
+                    string sysname2 = sysname.Split(',')[1];
+
+                    foreach (var branch2 in newCustomCollection)
+                    {
+                        foreach (var element in branch2.Elements)
+                        {
+                            if (element.DetailType == CustomElement.Detail.Manifold)
+                            {
+                                continue;
+                                element.LevelNumber = levelnumber;
+                                levelnumber++;
+                            }
+                            else if (element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname1) || element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname2))
+                            {
+
+                                element.GroupNumber = groupnumber;
+                            }
+                             if (element.BranchNumber==customBranch.Number)
+                            {
+                                element.GroupNumber = groupnumber;
+                            }
+                        }
+                    }
+                    groupnumber++;
+
+                }
+                // Обновляем коллекцию 
+                Collection = newCustomCollection;
+            }*/
+
+
+
+            public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;GroupNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;RelPress;KMS;PDyn;Ltot;Ptot;Code;MainTrack");
+            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;LevelNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;RelPress;KMS;PDyn;Ltot;Ptot;Code;MainTrack");
 
             foreach (var branch in Collection)
             {
                 foreach (var element in branch.Elements)
                 {
-                    string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.SystemName};{element.Lvl};{element.GroupNumber};{element.BranchNumber};{element.TrackNumber};" +
+                    string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.ShortSystemName};{element.Lvl};{element.LevelNumber};{element.BranchNumber};{element.TrackNumber};" +
                          $"{element.Volume};{element.ModelLength};{element.ModelDiameter};{element.ModelVelocity};{element.PStat};{element.RelPres};{element.LocRes};{element.PDyn};{element.Ltot};{element.Ptot};" +
-                         $"{element.SystemName}-{element.Lvl}-{element.GroupNumber}-{element.BranchNumber}-{element.TrackNumber};{element.MainTrack}";
+                         $"{element.SystemName}-{element.Lvl}-{element.LevelNumber}-{element.BranchNumber}-{element.TrackNumber};{element.MainTrack}";
                     csvcontent.AppendLine(a);
                 }
             }
