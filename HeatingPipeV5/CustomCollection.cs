@@ -13,6 +13,7 @@ using Autodesk.Revit.DB.ExtensibleStorage;
 using System.Globalization;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB.Structure;
+using Autodesk.Revit.UI;
 
 namespace HeatingPipeV5
 {
@@ -283,6 +284,7 @@ namespace HeatingPipeV5
             foreach (var branch in Collection)
             {
                 var controlelement = branch.Elements.First().ElementId;
+                
                 CustomElement previouselement = null;
                 int groupnumber2 = 1;
                 if (branch.Number == customBranch.Number)
@@ -292,6 +294,21 @@ namespace HeatingPipeV5
                     int levelCounter = 1;
                     for (int i = 0; i < branch.Elements.Count; i++)
                     {
+                       if (i !=0 )
+                        {
+                            CustomElement prevelement = branch.Elements[i - 1];
+                            CustomElement tempelement = branch.Elements[i];
+
+                            if (prevelement.IsSupply==true && tempelement.IsSupply==false)
+                            {
+                                trackCounter = 0;
+                                levelCounter = 1;
+                            }
+
+                        }
+
+
+                       
                         //var previouselement = branch.Elements[i-1];
                         var element = branch.Elements[i];
                         element.MainTrack = true;
@@ -300,7 +317,7 @@ namespace HeatingPipeV5
                             element.LevelNumber = levelCounter;
                         }
 
-                        if (element.ElementId.IntegerValue == 4241799)
+                        if (element.ElementId.IntegerValue == 4992064)
                         {
                             var element2 = element;
                         }
@@ -358,7 +375,20 @@ namespace HeatingPipeV5
 
                         if (element.DetailType == CustomElement.Detail.Pipe)
                         {
+                            element.TrackNumber = trackCounter;
+                            element.BranchNumber = branch.Number;
+                            element.LevelNumber = levelCounter;
+                            //branch.Add(element);
+                            checkedElements.Add(element.ElementId);
                             previouselement = element;
+                        }
+                        else
+                        {
+                            element.TrackNumber = trackCounter;
+                            element.BranchNumber = branch.Number;
+                            element.LevelNumber = levelCounter;
+                            //branch.Add(element);
+                            checkedElements.Add(element.ElementId);
                         }
 
                     }
@@ -384,9 +414,20 @@ namespace HeatingPipeV5
                         int levelCounter = 1;
                         for (int i = 0; i < branch.Elements.Count; i++)
                         {
+                            if (i != 0)
+                            {
+                                CustomElement prevelement = branch.Elements[i - 1];
+                                CustomElement tempelement = branch.Elements[i];
 
-                            //var previouselement = branch.Elements[i-1];
-                            var element = branch.Elements[i];
+                                if (prevelement.IsSupply == true && tempelement.IsSupply == false)
+                                {
+                                    trackCounter = 0;
+                                    levelCounter = 1;
+                                }
+
+                            }
+                        //var previouselement = branch.Elements[i-1];
+                        var element = branch.Elements[i];
                             if (checkedElements.Contains(element.ElementId))
                             {
                                 continue;
@@ -492,21 +533,79 @@ namespace HeatingPipeV5
             Collection = newCustomCollection;
         }
 
+        private double ConvertVolume(string volume)
+        {
+            double result = 0;
+            if (string.IsNullOrWhiteSpace(volume))
+            {
+                //Console.WriteLine("Строка пуста");
+                result = 0;
+            }
+
+            // Попытка преобразовать строку в число
+            if (double.TryParse(volume, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+            {
+                return result;
+            }
+            return result;
+        }
 
 
 
-         
 
-            
 
-            
-            /*int groupnumber = 0;
+
+
+
+
+        /*int groupnumber = 0;
+        var pipe = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment).First();
+        string sysname = pipe.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
+        string sysname1 = sysname.Split(',')[0];
+        string sysname2 = sysname.Split(',')[1];
+
+        foreach (var branch2 in newCustomCollection)
+        {
+            foreach (var element in branch2.Elements)
+            {
+                if (element.DetailType == CustomElement.Detail.Manifold)
+                {
+                    continue;
+                }
+                else if (element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname1) || element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname2))
+                {
+                    element.GroupNumber = groupnumber;
+                }
+                if (element.BranchNumber == customBranch.Number)
+                {
+                    element.GroupNumber = groupnumber;
+                }
+            }
+        }
+        groupnumber++;*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /*//int groupnumber = 0;
+        foreach (var branch in Collection)
+        {
             var pipe = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment).First();
             string sysname = pipe.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
             string sysname1 = sysname.Split(',')[0];
             string sysname2 = sysname.Split(',')[1];
 
-            foreach (var branch2 in newCustomCollection)
+            foreach (var branch2 in Collection)
             {
                 foreach (var element in branch2.Elements)
                 {
@@ -524,8 +623,9 @@ namespace HeatingPipeV5
                     }
                 }
             }
-            groupnumber++;*/
-        
+            groupnumber++;
+
+        }*/
 
 
 
@@ -537,29 +637,90 @@ namespace HeatingPipeV5
 
 
 
+        /*public void MarkCollection(CustomBranch customBranch)
+        {
+            List<CustomBranch> newCustomCollection = new List<CustomBranch>();
+            HashSet<ElementId> checkedElements = new HashSet<ElementId>();
 
 
-            /*//int groupnumber = 0;
+
+
+
+            // Сначала обрабатываем основную ветвь 
             foreach (var branch in Collection)
+            {
+                if (branch.Number == customBranch.Number)
+                {
+                    int trackCounter = 0;
+
+                    foreach (var element in branch.Elements)
+                    {
+                        element.GroupNumber = 0;
+                        element.TrackNumber = trackCounter;
+                        element.BranchNumber = branch.Number;
+                        element.MainTrack = true;
+                        checkedElements.Add(element.ElementId);
+                        trackCounter++;
+                    }
+                    newCustomCollection.Add(branch);
+                    break; // Прекращаем дальнейший обход после нахождения основной ветви 
+                }
+            }
+
+            // Обрабатываем остальные ветви 
+            foreach (var branch in Collection)
+            {
+                if (branch.Number == customBranch.Number)
+                {
+                    continue;
+                }
+
+                CustomBranch newCustomBranch = new CustomBranch(Document);
+                int trackCounter = 0;
+
+                foreach (var element in branch.Elements)
+                {
+                    // Если элемент уже есть в основной ветви, пропускаем его 
+                    if (checkedElements.Contains(element.ElementId))
+                    {
+                        continue;
+                    }
+
+                    // Устанавливаем номера и добавляем элемент в новую ветвь 
+                    element.TrackNumber = trackCounter;
+                    element.BranchNumber = branch.Number;
+                    newCustomBranch.Add(element);
+                    checkedElements.Add(element.ElementId);
+                    trackCounter++;  // Увеличиваем trackCounter только после успешного добавления элемента
+                }
+
+                newCustomCollection.Add(newCustomBranch);
+            }
+            int levelnumber = 1;
+            int groupnumber = 0;
+            foreach (var branch in newCustomCollection)
             {
                 var pipe = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment).First();
                 string sysname = pipe.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
                 string sysname1 = sysname.Split(',')[0];
                 string sysname2 = sysname.Split(',')[1];
 
-                foreach (var branch2 in Collection)
+                foreach (var branch2 in newCustomCollection)
                 {
                     foreach (var element in branch2.Elements)
                     {
                         if (element.DetailType == CustomElement.Detail.Manifold)
                         {
                             continue;
+                            element.LevelNumber = levelnumber;
+                            levelnumber++;
                         }
                         else if (element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname1) || element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname2))
                         {
+
                             element.GroupNumber = groupnumber;
                         }
-                        if (element.BranchNumber == customBranch.Number)
+                         if (element.BranchNumber==customBranch.Number)
                         {
                             element.GroupNumber = groupnumber;
                         }
@@ -567,117 +728,14 @@ namespace HeatingPipeV5
                 }
                 groupnumber++;
 
-            }*/
+            }
+            // Обновляем коллекцию 
+            Collection = newCustomCollection;
+        }*/
 
 
 
-
-
-
-
-
-
-
-
-            /*public void MarkCollection(CustomBranch customBranch)
-            {
-                List<CustomBranch> newCustomCollection = new List<CustomBranch>();
-                HashSet<ElementId> checkedElements = new HashSet<ElementId>();
-
-
-
-
-
-                // Сначала обрабатываем основную ветвь 
-                foreach (var branch in Collection)
-                {
-                    if (branch.Number == customBranch.Number)
-                    {
-                        int trackCounter = 0;
-
-                        foreach (var element in branch.Elements)
-                        {
-                            element.GroupNumber = 0;
-                            element.TrackNumber = trackCounter;
-                            element.BranchNumber = branch.Number;
-                            element.MainTrack = true;
-                            checkedElements.Add(element.ElementId);
-                            trackCounter++;
-                        }
-                        newCustomCollection.Add(branch);
-                        break; // Прекращаем дальнейший обход после нахождения основной ветви 
-                    }
-                }
-
-                // Обрабатываем остальные ветви 
-                foreach (var branch in Collection)
-                {
-                    if (branch.Number == customBranch.Number)
-                    {
-                        continue;
-                    }
-
-                    CustomBranch newCustomBranch = new CustomBranch(Document);
-                    int trackCounter = 0;
-
-                    foreach (var element in branch.Elements)
-                    {
-                        // Если элемент уже есть в основной ветви, пропускаем его 
-                        if (checkedElements.Contains(element.ElementId))
-                        {
-                            continue;
-                        }
-
-                        // Устанавливаем номера и добавляем элемент в новую ветвь 
-                        element.TrackNumber = trackCounter;
-                        element.BranchNumber = branch.Number;
-                        newCustomBranch.Add(element);
-                        checkedElements.Add(element.ElementId);
-                        trackCounter++;  // Увеличиваем trackCounter только после успешного добавления элемента
-                    }
-
-                    newCustomCollection.Add(newCustomBranch);
-                }
-                int levelnumber = 1;
-                int groupnumber = 0;
-                foreach (var branch in newCustomCollection)
-                {
-                    var pipe = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment).First();
-                    string sysname = pipe.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
-                    string sysname1 = sysname.Split(',')[0];
-                    string sysname2 = sysname.Split(',')[1];
-
-                    foreach (var branch2 in newCustomCollection)
-                    {
-                        foreach (var element in branch2.Elements)
-                        {
-                            if (element.DetailType == CustomElement.Detail.Manifold)
-                            {
-                                continue;
-                                element.LevelNumber = levelnumber;
-                                levelnumber++;
-                            }
-                            else if (element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname1) || element.Element.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString().Equals(sysname2))
-                            {
-
-                                element.GroupNumber = groupnumber;
-                            }
-                             if (element.BranchNumber==customBranch.Number)
-                            {
-                                element.GroupNumber = groupnumber;
-                            }
-                        }
-                    }
-                    groupnumber++;
-
-                }
-                // Обновляем коллекцию 
-                Collection = newCustomCollection;
-            }*/
-
-
-
-            public string GetContent()
+        public string GetContent()
         {
             var csvcontent = new StringBuilder();
             csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;LevelNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;RelPress;KMS;PDyn;Ltot;Ptot;Code;MainTrack");
@@ -688,7 +746,7 @@ namespace HeatingPipeV5
                 {
                     string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.ShortSystemName};{element.Lvl};{element.LevelNumber};{element.BranchNumber};{element.TrackNumber};" +
                          $"{element.Volume};{element.ModelLength};{element.ModelDiameter};{element.ModelVelocity};{element.PStat};{element.RelPres};{element.LocRes};{element.PDyn};{element.Ltot};{element.Ptot};" +
-                         $"{element.SystemName}-{element.Lvl}-{element.LevelNumber}-{element.BranchNumber}-{element.TrackNumber};{element.MainTrack}";
+                         $"{element.ShortSystemName}-{element.Lvl}-{element.BranchNumber}-{element.LevelNumber}-{element.TrackNumber};{element.MainTrack}";
                     csvcontent.AppendLine(a);
                 }
             }

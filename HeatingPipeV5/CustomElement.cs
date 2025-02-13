@@ -49,6 +49,7 @@ namespace HeatingPipeV5
         public double Ptot { get; set; }
         public double Ltot { get; set; }
         public double Lenght { get; set; }
+        public bool IsSupply { get; set; }
         public enum Detail
         {
             
