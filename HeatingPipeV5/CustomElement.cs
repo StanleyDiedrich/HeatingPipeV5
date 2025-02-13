@@ -49,6 +49,7 @@ namespace HeatingPipeV5
         public double Ptot { get; set; }
         public double Ltot { get; set; }
         public double Lenght { get; set; }
+        public bool IsSupply { get; set; }
         public enum Detail
         {
             
@@ -83,6 +84,7 @@ namespace HeatingPipeV5
         public int TrackNumber { get; set; }
         public int BranchNumber { get; set; }
         public int GroupNumber { get; set; }
+        public int LevelNumber { get; set; }
         public bool MainTrack { get; set; }
         public string RelPres { get; set; }
         private string GetValue(string primaryvolume)

@@ -48,6 +48,10 @@ namespace HeatingPipeV5
 
             Lambda = GetLambda(Reynolds, Roughness);
             Pressure = Lambda / Diameter * Density * FlowVelocity * FlowVelocity / 2*Length;
+            if (double.IsInfinity(Pressure))
+            {
+                Pressure = 0;
+            }
         }
 
         private double GetLambda(double reynolds, double roughness)

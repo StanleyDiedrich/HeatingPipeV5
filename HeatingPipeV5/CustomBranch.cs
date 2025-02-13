@@ -52,6 +52,18 @@ namespace HeatingPipeV5
                 }
             }
         }
+
+        public void AddSpecial(CustomElement customElement)
+        {
+            if (customElement!=null)
+            {
+                var existingNodeIndex = Elements.FindIndex(n => n.ElementId == customElement.ElementId);
+                if (existingNodeIndex==0)
+                {
+                    Elements.Add(customElement);
+                }
+            }
+        }
         public void Remove(CustomElement customElement)
         {
             // Находим индекс узла с указанным ElementId
@@ -92,6 +104,7 @@ namespace HeatingPipeV5
                     nextElement = customElementSup.SupplyConnector.NextOwnerId;
                 }
                 customElementSup = new CustomElement(document, nextElement);
+                customElementSup.IsSupply = true;
             }
             while (nextElement != null);
 
@@ -109,6 +122,7 @@ namespace HeatingPipeV5
                     nextElement = customElementRet.ReturnConnector.NextOwnerId;
                 }
                 customElementRet = new CustomElement(document, nextElement);
+                customElementRet.IsSupply = false;
             }
             while (nextElement != null);
 
