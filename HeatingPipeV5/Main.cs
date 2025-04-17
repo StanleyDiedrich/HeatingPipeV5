@@ -19,6 +19,7 @@ using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB.Visual;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
 using Microsoft.Win32;
 
 namespace HeatingPipeV5
@@ -75,34 +76,50 @@ namespace HeatingPipeV5
             window.DataContext = mainViewModel;
             window.ShowDialog();
 
-            List<ElementId> elIds = new List<ElementId>();
-            var systemnames = mainViewModel.SystemNumbersList.Select(x => x).Where(x => x.IsSelected == true);
-            //var systemelements = mainViewModel.SystemElements;
-
-            List<ElementId> startelements = new List<ElementId>();
-            List<ElementId> selectedterminals = new List<ElementId>();
-            List<ElementId> selectedelements = new List<ElementId>();
-
-            foreach (var systemname in systemnames)
+            if (mainViewModel.StartFunction)
             {
-                string systemName = systemname.SystemName;
+                List<ElementId> elIds = new List<ElementId>();
+                var systemnames = mainViewModel.SystemNumbersList.Select(x => x).Where(x => x.IsSelected == true);
+                //var systemelements = mainViewModel.SystemElements;
 
-                //var maxpipe = GetStartDuct(doc, systemName);
 
-                selectedterminals = GetMechanicalEquipment(doc, systemName);
-                CustomCollection collection = GetCollection(doc, selectedterminals);
-                //uIDocument.Selection.SetElementIds(collection.ShowElements());
-                 
-                
+                List<ElementId> startelements = new List<ElementId>();
+                List<ElementId> selectedterminals = new List<ElementId>();
+                List<ElementId> selectedelements = new List<ElementId>();
+
+                foreach (var systemname in systemnames)
+                {
+                    string systemName = systemname.SystemName;
+
+                    //var maxpipe = GetStartDuct(doc, systemName);
+
+                    selectedterminals = GetMechanicalEquipment(doc, systemName);
+                    CustomCollection collection = GetCollection(doc, selectedterminals);
+                    //uIDocument.Selection.SetElementIds(collection.ShowElements());
+
+
+                    collection.Calcualate(mainViewModel.Density);
+                    collection.ResCalculate();
+                    CustomBranch selectedbranch = collection.SelectMainBranch();
+                    //uIDocument.Selection.SetElementIds(selectedbranch.ShowElements());
+
+                    collection.MarkCollection(selectedbranch);
+                    string content = collection.GetContent();
+                    collection.SaveFile(content);
+
+                }
+            }
+            else
+            {
+                List<ElementId> startelements = GetSelectedStartElements(uIDocument);
+                startelements = GetMechanicalEquipment(doc, startelements);
+                CustomCollection collection = GetCollection(doc, startelements);
                 collection.Calcualate(mainViewModel.Density);
                 collection.ResCalculate();
-                CustomBranch selectedbranch = collection.SelectMainBranch();
-                //uIDocument.Selection.SetElementIds(selectedbranch.ShowElements());
-
-                collection.MarkCollection(selectedbranch);
+                CustomBranch selectedBranch = collection.SelectMainBranch();
+                collection.MarkCollection(selectedBranch);
                 string content = collection.GetContent();
                 collection.SaveFile(content);
-
             }
 
             return Result.Succeeded;
@@ -118,6 +135,17 @@ namespace HeatingPipeV5
             return collection;
         }
 
+        private List<ElementId> GetSelectedStartElements(UIDocument uIDocument)
+        {
+            IList<Reference> selectedRefs = uIDocument.Selection.PickObjects(ObjectType.Element, "Выберите элементы");
+
+            // Получаем элементы из ссылок
+            List<Element> elements = selectedRefs.Select(r => uIDocument.Document.GetElement(r)).ToList();
+            List<ElementId> elementIds = new List<ElementId>();
+            elementIds = elements.Select(x => x.Id).ToList();
+           
+            return elementIds;
+        }
         private List<ElementId> GetMechanicalEquipment(Document doc, string systemName)
         {
             List<ElementId> resultterminals = new List<ElementId>();
@@ -149,6 +177,21 @@ namespace HeatingPipeV5
                     }
                 }
             }
+            return resultterminals;
+        }
+        private List<ElementId> GetMechanicalEquipment(Document doc,List<ElementId> elementIds)
+        {
+            List<ElementId> resultterminals = new List<ElementId>();
+
+            foreach (var elementId in elementIds)
+            {
+                Element element = doc.GetElement(elementId);
+                if (element.Category.Id.IntegerValue== (int)BuiltInCategory.OST_MechanicalEquipment)
+                {
+                    resultterminals.Add(element.Id);
+                }
+            }
+           
             return resultterminals;
         }
     }

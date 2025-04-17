@@ -82,7 +82,16 @@ namespace HeatingPipeV5
                 OnPropertyChanged(nameof(FilteredSystemNumbersList));
             }
         }
-
+        private bool _startFunction;
+        public bool StartFunction
+        {
+            get { return _startFunction; }
+            set
+            {
+                _startFunction = value;
+                OnPropertyChanged(nameof(StartFunction));
+            }
+        }
         public ObservableCollection<SystemNumber> SystemNumbersList
         {
             get => _systemNumbersList;
@@ -93,6 +102,8 @@ namespace HeatingPipeV5
                 OnPropertyChanged(nameof(FilteredSystemNumbersList));
             }
         }
+
+
         public ObservableCollection<SystemNumber> FilteredSystemNumbersList
         {
             get
@@ -148,8 +159,17 @@ namespace HeatingPipeV5
         {
             var selectedItems = SystemNumbersList.Where(x => x.IsSelected).Select(x => x.SystemName).ToList();
             SelectedSystems = string.Join(", ", selectedItems);
+            StartFunction = true;
             Window.Close();
         }
+
+        public ICommand StartPartial { get; }
+        public void PartialCalc(object param)
+        {
+            StartFunction = false;
+            Window.Close();
+        }
+       
 
         private List<SystemElement> systemElements;
         public List<SystemElement> SystemElements
@@ -213,6 +233,7 @@ namespace HeatingPipeV5
 
             ShowSelectedSystemsCommand = new RelayCommand(ShowSelectedSystems);
             StartCommand = new RelayCommand(StartCalculate);
+            StartPartial = new RelayCommand(PartialCalc);
             /*CalculationModes = new ObservableCollection<CalculationMode>
         {
             new CalculationMode { CalculationName = "Обход системы вентиляции", CalculationId=0, IsMode = false },
