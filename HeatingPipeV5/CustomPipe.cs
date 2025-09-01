@@ -18,6 +18,8 @@ namespace HeatingPipeV5
         public double Viscosity { get; set; }
         public double Reynolds { get; set; }
         public double Diameter { get; set; }
+        public string DiameterInner { get; set; }
+        public string DiameterOuter { get; set; }
         public double FlowVelocity { get; set; }
         public double Roughness { get; set; }
         public double Lambda { get; set; }
@@ -39,6 +41,9 @@ namespace HeatingPipeV5
             FlowVelocity = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_VELOCITY_PARAM).AsValueString().Split()[0]);
             Roughness = Element.get_Parameter(BuiltInParameter.RBS_PIPE_ROUGHNESS_PARAM).AsDouble() * 304.8;
             Diameter = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_INNER_DIAM_PARAM).AsValueString())/1000;
+            DiameterInner = (Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_INNER_DIAM_PARAM).AsValueString()) / 1000).ToString();
+            DiameterOuter = (Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER).AsValueString()) / 1000).ToString();
+
             Length = Element.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsDouble() * 304.8/1000;
             Viscosity visosity = new Viscosity();
             Viscosity = visosity.GetViscosity(Temperature);

@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace HeatingPipeV5
+{
+    public enum Regime
+    {
+        TOTAL,
+        PARTIAL,
+        MEP_ROOM_COLLECTION
+
+    }
+}

@@ -61,6 +61,19 @@ namespace HeatingPipeV5
             }
         }
 
+       /* private LinkedModelsView _linkedModelsView;
+
+        public LinkedModelsView LinkedView
+        {
+            get { return _linkedModelsView; }
+            set
+            {
+                _linkedModelsView = value;
+                OnPropertyChanged("LinkedView");
+            }
+        }*/
+
+
         private UserControl1 window;
         public UserControl1 Window
         {
@@ -71,6 +84,20 @@ namespace HeatingPipeV5
                 OnPropertyChanged("Window");
             }
         }
+
+        private string _searchModelText = "Выберите модель";
+        public string SearchModelText
+        {
+            get { return _searchModelText; }
+            set
+            {
+                _searchModelText = value;
+                OnPropertyChanged(nameof(SearchModelText));
+                OnPropertyChanged(nameof(FilteredLinkedModelsList));
+            }
+        }
+
+
         private string _searchText = "Выберите систему";
         public string SearchText
         {
@@ -82,8 +109,8 @@ namespace HeatingPipeV5
                 OnPropertyChanged(nameof(FilteredSystemNumbersList));
             }
         }
-        private bool _startFunction;
-        public bool StartFunction
+        private Regime _startFunction;
+        public Regime StartFunction
         {
             get { return _startFunction; }
             set
@@ -100,6 +127,18 @@ namespace HeatingPipeV5
                 _systemNumbersList = value;
                 OnPropertyChanged(nameof(SystemNumbersList));
                 OnPropertyChanged(nameof(FilteredSystemNumbersList));
+            }
+        }
+
+        private ObservableCollection<ModelsName> _modelList;
+        public ObservableCollection<ModelsName> ModelsList
+        {
+            get => _modelList;
+            set
+            {
+                _modelList = value;
+                OnPropertyChanged(nameof(ModelsList));
+                OnPropertyChanged(nameof(FilteredLinkedModelsList));
             }
         }
 
@@ -120,6 +159,25 @@ namespace HeatingPipeV5
                     .ToList();
 
                 return new ObservableCollection<SystemNumber>(filteredList);
+            }
+        }
+         
+        public ObservableCollection<ModelsName> FilteredLinkedModelsList
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(SearchModelText) || SearchModelText.Equals("Выберите модель"))
+                {
+                    return new ObservableCollection<ModelsName>(ModelsList);
+                }
+
+                // Используем ToList() для получения реальной коллекции после фильтрации
+                var filteredModelList = ModelsList
+                    .Where(system => !string.IsNullOrWhiteSpace(system.ModelName) &&
+                                     system.ModelName.ToLower().Contains(SearchModelText.ToLower()))
+                    .ToList();
+
+                return new ObservableCollection<ModelsName>(filteredModelList);
             }
         }
         public SystemNumber SelectedSystemNumber
@@ -144,6 +202,15 @@ namespace HeatingPipeV5
             }
         }
 
+        public ICommand CollectMepRoomsCommand { get; }
+
+        public void CollectMepRooms(object param)
+        {
+            var selectedModel = ModelsList.Where(x => x.IsSelected).Select(x => x.ModelName).ToList();
+            StartFunction = Regime.MEP_ROOM_COLLECTION;
+            Window.Close();
+            
+        }
         public ICommand ShowSelectedSystemsCommand { get; }
 
         public void ShowSelectedSystems(object param)
@@ -159,14 +226,16 @@ namespace HeatingPipeV5
         {
             var selectedItems = SystemNumbersList.Where(x => x.IsSelected).Select(x => x.SystemName).ToList();
             SelectedSystems = string.Join(", ", selectedItems);
-            StartFunction = true;
+            StartFunction = Regime.TOTAL;
             Window.Close();
         }
 
         public ICommand StartPartial { get; }
         public void PartialCalc(object param)
         {
-            StartFunction = false;
+           
+
+            StartFunction = Regime.PARTIAL;
             Window.Close();
         }
        
@@ -214,15 +283,16 @@ namespace HeatingPipeV5
         }
 */
 
+       
 
 
 
-
-        public MainViewModel(Autodesk.Revit.DB.Document doc, UserControl1 window, ObservableCollection<SystemNumber> systemNumbers)
+        public MainViewModel(Autodesk.Revit.DB.Document doc, UserControl1 window, ObservableCollection<SystemNumber> systemNumbers, ObservableCollection<ModelsName> modelsNames)
         {
             Window = window;
             Document = doc;
             SystemNumbersList = systemNumbers;
+            ModelsList = modelsNames;
             FilteredWorksetCollector collector = new FilteredWorksetCollector(doc);
             IList<Workset> worksets = collector.OfKind(WorksetKind.UserWorkset).ToWorksets();
             foreach (var workset in worksets)
@@ -234,12 +304,8 @@ namespace HeatingPipeV5
             ShowSelectedSystemsCommand = new RelayCommand(ShowSelectedSystems);
             StartCommand = new RelayCommand(StartCalculate);
             StartPartial = new RelayCommand(PartialCalc);
-            /*CalculationModes = new ObservableCollection<CalculationMode>
-        {
-            new CalculationMode { CalculationName = "Обход системы вентиляции", CalculationId=0, IsMode = false },
-
-        };*/
-            // SystemElements = new List<SystemElement>();
+            CollectMepRoomsCommand = new RelayCommand(CollectMepRooms);
+          
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

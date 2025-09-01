@@ -14,6 +14,8 @@ using System.Globalization;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
+using System.Windows.Input;
+using System.Xml.Linq;
 
 namespace HeatingPipeV5
 {
@@ -107,7 +109,32 @@ namespace HeatingPipeV5
                             {
                                 element.Volume = element.Element.LookupParameter("Расход воды").AsValueString().Split()[0];
                             }
+                            try
+                            {
+                                element.RoomName = (element.Element as FamilyInstance).Space.Name;
+                            }
+                            catch
+                            {
 
+                            }
+                            try
+                            {
+                                element.TempIn = (element.Element as FamilyInstance).LookupParameter("ADSK_Температура подающей линии").AsValueString();
+                                element.TempOut = (element.Element as FamilyInstance).LookupParameter("ADSK_Температура обратной линии").AsValueString();
+                                element.TempRegime = $"{element.TempIn}/{element.TempOut}";
+                            }
+                            catch
+                            {
+
+                            }
+                            try
+                            {
+                                element.HeatLoss = (element.Element as FamilyInstance).LookupParameter("ADSK_Теплопотери").AsValueString();
+                            }
+                            catch
+                            {
+
+                            }
                             branch.Pressure += 8000;
                             branch.Length += 0;
 
@@ -117,6 +144,7 @@ namespace HeatingPipeV5
                             element.DetailType = CustomElement.Detail.Manifold;
                             element.LocRes = 1.1;
                             branch.Pressure += 5000;
+                            element.Unit = "шт";
                         }
                         else if (element.DetailType == CustomElement.Detail.Elbow)
                         {
@@ -127,11 +155,13 @@ namespace HeatingPipeV5
                             CustomElbow customElbow = new CustomElbow(Document, element);
                             element.LocRes = customElbow.LocRes;
                             element.PDyn = customElbow.PDyn;
-                            element.ModelLength = "-";
+                            element.ModelLength = "1";
+                            element.DiameterOuter = element.Element.get_Parameter(BuiltInParameter.RBS_CALCULATED_SIZE).AsString();
                             //CustomElbow customElbow = new CustomElbow(Document, element);
                             //element.LocRes = customElbow.LocRes;
                             //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
                             branch.Pressure += element.PDyn;
+                            element.Unit = "шт";
                         }
                         else if (element.DetailType == CustomElement.Detail.Tee)
                         {
@@ -154,6 +184,7 @@ namespace HeatingPipeV5
                                 branch.Pressure += customPipe.Pressure;
                                 element.Lenght += customPipe.Length;
                                 branch.Length += customPipe.Length;
+                                element.Unit = "шт";
                             }
                             else
                             {
@@ -169,6 +200,8 @@ namespace HeatingPipeV5
                                 //element.LocRes = customTee.LocRes;
                                 //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
                                 branch.Pressure += element.PDyn;
+                               
+                                element.Unit = "шт";
                             }
 
                         }
@@ -196,7 +229,9 @@ namespace HeatingPipeV5
                             CustomTransition customTransition = new CustomTransition(Document, element);
                             element.LocRes = customTransition.LocRes;
                             element.PDyn = customTransition.PDyn;
-                            element.ModelLength = "-";
+                            element.ModelLength = "1";
+                            element.Unit = "шт";
+                            element.DiameterOuter = element.Element.get_Parameter(BuiltInParameter.RBS_CALCULATED_SIZE).AsString();
                             //CustomTransition customTransition = new CustomTransition(Document, element);
 
                             /*element.LocRes = customTransition.LocRes;
@@ -223,7 +258,9 @@ namespace HeatingPipeV5
                             branch.Pressure += customPipe.Pressure;
                             element.Lenght += customPipe.Length;
                             branch.Length += customPipe.Length;
-
+                            element.Unit = "м";
+                            element. DiameterInner = (Convert.ToDouble(element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_INNER_DIAM_PARAM).AsValueString())).ToString();
+                            element.DiameterOuter = (Convert.ToDouble(element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER).AsValueString())).ToString();
                             /*branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
                             string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
                             element.PStat = double.Parse(pressureDropString[0], formatter);*/
@@ -231,12 +268,14 @@ namespace HeatingPipeV5
                         else if (element.DetailType == CustomElement.Detail.Valve)
                         {
                             branch.Pressure += 10000;
+                            element.Unit = "шт";
                         }
                         else if (element.DetailType == CustomElement.Detail.Union)
                         {
                             element.ModelDiameter = "-";
                             element.ModelLength = "-";
                             branch.Pressure += 0;
+                            element.Unit = "шт";
                         }
                         branch.RelPressure = branch.Pressure / branch.Length;
                     }
@@ -558,7 +597,6 @@ namespace HeatingPipeV5
 
 
 
-       
 
 
 
@@ -573,23 +611,84 @@ namespace HeatingPipeV5
 
 
 
-       
+
+        public string PrepareContent()
+        {
+            var csvcontent = new StringBuilder();
+            csvcontent.AppendLine("Level Архитектурный;DetailType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Length;Unit;ElementIds;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График");
+
+            foreach (var branch in Collection)
+            {
+                var elements = branch.Elements
+                    .GroupBy(s => new { s.Lvl, s.SystemName, s.DetailType, s.LevelNumber, s.TrackNumber })
+                    .SelectMany(g => g.Select(element => new
+                    {
+                        element.Lvl,
+                        element.SystemName,
+                        element.BranchNumber,
+                        element.DetailType,
+                        element.LevelNumber,
+                        element.TrackNumber,
+                        element.DiameterInner,
+                        element.DiameterOuter,
+                        element.ModelLength,
+                        element.Unit,
+                        element.ElementId,
+                        element.ShortSystemName,
+                        element.ElementName,
+                        element.AuditorLevel,
+                        element.RoomName,
+                        element.HeatLoss,
+                        element.TempRegime
+                    }));
+
+                foreach (var element in elements)
+                {
+                    string a = $"{element.Lvl};{element.DetailType};{element.BranchNumber};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};" +
+                                $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchNumber}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
+                    csvcontent.AppendLine(a);
+                }
+            }
+            return csvcontent.ToString();
+        }
 
 
 
-
-
-
-
-
-
-
-
-      
 
 
 
         public string GetContent()
+        {
+            var csvcontent = new StringBuilder();
+            csvcontent.AppendLine("Level Архитектурный;DetalType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График");
+
+           
+
+            foreach (var branch in Collection)
+            {
+                
+                foreach (var element in branch.Elements)
+                {
+                    string a = $"{element.Lvl};{element.DetailType};{element.BranchNumber};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};" +
+                         $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchNumber}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
+                        
+                    csvcontent.AppendLine(a);
+                }
+               
+            }
+
+            return csvcontent.ToString();
+        }
+
+
+
+
+
+
+
+
+
+       /* public string GetContent()
         {
             var csvcontent = new StringBuilder();
             csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;LevelNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;RelPress;KMS;PDyn;Ltot;Ptot;Code;MainTrack");
@@ -606,7 +705,7 @@ namespace HeatingPipeV5
             }
 
             return csvcontent.ToString();
-        }
+        }*/
         public void SaveFile(string content) // спрятали функцию сохранения 
         {
             System.Windows.Forms.SaveFileDialog saveFileDialog = new System.Windows.Forms.SaveFileDialog();

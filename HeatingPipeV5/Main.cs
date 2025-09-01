@@ -14,6 +14,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using Autodesk.Revit.Creation;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Plumbing;
@@ -36,6 +37,12 @@ namespace HeatingPipeV5
             Autodesk.Revit.DB.Document doc = uIDocument.Document;
 
             List<string> systemnumbers = new List<string>();
+            List<string> modelNames = new List<string>();
+
+            var linkInstances = new FilteredElementCollector(doc)
+            .OfClass(typeof(RevitLinkInstance))
+            .Cast<RevitLinkInstance>()
+            .ToList();
 
             IList<Element> pipes = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_PipeCurves).WhereElementIsNotElementType().ToElements();
 
@@ -59,6 +66,38 @@ namespace HeatingPipeV5
                 }
             }
 
+
+            
+            foreach (var model in linkInstances )
+            {
+                try
+                {
+                    if (model!=null)
+                    {
+                        if (!modelNames.Contains(model.Name))
+                        {
+                            modelNames.Add(model.Name);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TaskDialog.Show("Revit", ex.ToString());
+                }
+
+            }
+            ObservableCollection<ModelsName> modelsNames = new ObservableCollection<ModelsName>();
+            foreach (var modName in modelNames)
+            {
+                ModelsName model = new ModelsName(modName);
+                modelsNames.Add(model);
+            }
+            var sortedModNames = new ObservableCollection<ModelsName>(modelsNames.OrderBy(x => x.ModelName));
+            modelsNames = sortedModNames;
+
+
+
+
             ObservableCollection<SystemNumber> sysNums = new ObservableCollection<SystemNumber>();
             foreach (var systemnumber in systemnumbers)
             {
@@ -71,60 +110,94 @@ namespace HeatingPipeV5
 
 
             UserControl1 window = new UserControl1();
-            MainViewModel mainViewModel = new MainViewModel(doc, window, sysNums);
+            MainViewModel mainViewModel = new MainViewModel(doc, window, sysNums, modelsNames);
             
             window.DataContext = mainViewModel;
             window.ShowDialog();
 
-            if (mainViewModel.StartFunction)
+
+            switch (mainViewModel.StartFunction)
             {
-                List<ElementId> elIds = new List<ElementId>();
-                var systemnames = mainViewModel.SystemNumbersList.Select(x => x).Where(x => x.IsSelected == true);
-                //var systemelements = mainViewModel.SystemElements;
+                case Regime.TOTAL:
+                    {
+                        var systemNames = mainViewModel.SystemNumbersList
+                            .Where(x => x.IsSelected)
+                            .Select(x => x.SystemName);
 
+                        foreach (var systemName in systemNames)
+                        {
+                            var selectedTerminals = GetMechanicalEquipment(doc, systemName);
+                            var collection = GetCollection(doc, selectedTerminals);
 
-                List<ElementId> startelements = new List<ElementId>();
-                List<ElementId> selectedterminals = new List<ElementId>();
-                List<ElementId> selectedelements = new List<ElementId>();
+                            collection.Calcualate(mainViewModel.Density);
+                            collection.ResCalculate();
 
-                foreach (var systemname in systemnames)
+                            var selectedBranch = collection.SelectMainBranch();
+
+                            collection.MarkCollection(selectedBranch);
+                            var content = collection.PrepareContent();
+                            collection.SaveFile(content);
+                        }
+                        break;
+                    }
+
+                case Regime.PARTIAL:
+                    {
+                        var startElements = GetSelectedStartElements(uIDocument);
+                        if (startElements != null && startElements.Count > 0)
+                        {
+                            startElements = GetMechanicalEquipment(doc, startElements);
+                            var collection = GetCollection(doc, startElements);
+
+                            collection.Calcualate(mainViewModel.Density);
+                            collection.ResCalculate();
+
+                            var selectedBranch = collection.SelectMainBranch();
+
+                            collection.MarkCollection(selectedBranch);
+                            var content = collection.PrepareContent();
+                            collection.SaveFile(content);
+                        }
+                        break;
+                    }
+
+                case Regime.MEP_ROOM_COLLECTION:
                 {
-                    string systemName = systemname.SystemName;
+                        List<Element> mep_rooms = new List<Element>();
+                       var selectedModel = mainViewModel.ModelsList.Where(x => x.IsSelected).Select(x => x.ModelName).ToList();
+                       FilteredElementCollector filter = new FilteredElementCollector(doc);
+                       var linkedElement = filter.OfCategory(BuiltInCategory.OST_RvtLinks).WhereElementIsNotElementType().ToList();
+                        foreach (var model in selectedModel)
+                       {
+                            foreach (var  linkmodel in linkedElement)
+                            {
+                                if (linkmodel.Name.Equals(model))
+                                {
+                                    FilteredElementCollector filter1 = new FilteredElementCollector(linkmodel.Document);
+                                    var activedocument = (doc.GetElement(linkmodel.Id) as RevitLinkInstance).GetLinkDocument();
+                                    FilteredElementCollector linkedFilter = new FilteredElementCollector(activedocument);
+                                    mep_rooms = linkedFilter.OfCategory(BuiltInCategory.OST_MEPSpaces).WhereElementIsNotElementType().ToList();
+                                    
 
-                    //var maxpipe = GetStartDuct(doc, systemName);
 
-                    selectedterminals = GetMechanicalEquipment(doc, systemName);
-                    CustomCollection collection = GetCollection(doc, selectedterminals);
-                    //uIDocument.Selection.SetElementIds(collection.ShowElements());
-
-
-                    collection.Calcualate(mainViewModel.Density);
-                    collection.ResCalculate();
-                    CustomBranch selectedbranch = collection.SelectMainBranch();
-                    //uIDocument.Selection.SetElementIds(selectedbranch.ShowElements());
-
-                    collection.MarkCollection(selectedbranch);
-                    string content = collection.GetContent();
-                    collection.SaveFile(content);
-
+                                }
+                            }
+                       }
+                        
+                        break;
                 }
+
+                default:
+                    // необязательная обработка по умолчанию
+                    break;
             }
-            else
-            {
-                List<ElementId> startelements = GetSelectedStartElements(uIDocument);
-                startelements = GetMechanicalEquipment(doc, startelements);
-                CustomCollection collection = GetCollection(doc, startelements);
-                collection.Calcualate(mainViewModel.Density);
-                collection.ResCalculate();
-                CustomBranch selectedBranch = collection.SelectMainBranch();
-                collection.MarkCollection(selectedBranch);
-                string content = collection.GetContent();
-                collection.SaveFile(content);
-            }
+
+
+
 
             return Result.Succeeded;
         }
-        private CustomCollection GetCollection(Document doc, List<ElementId> selectedterminals)
+        private CustomCollection GetCollection(Autodesk.Revit.DB.Document doc, List<ElementId> selectedterminals)
         {
             CustomCollection collection = new CustomCollection(doc);
             foreach (var terminal in selectedterminals)
@@ -146,7 +219,7 @@ namespace HeatingPipeV5
            
             return elementIds;
         }
-        private List<ElementId> GetMechanicalEquipment(Document doc, string systemName)
+        private List<ElementId> GetMechanicalEquipment(Autodesk.Revit.DB.Document doc, string systemName)
         {
             List<ElementId> resultterminals = new List<ElementId>();
             var terminals = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_MechanicalEquipment).WhereElementIsNotElementType().ToElementIds().ToList();
@@ -179,7 +252,7 @@ namespace HeatingPipeV5
             }
             return resultterminals;
         }
-        private List<ElementId> GetMechanicalEquipment(Document doc,List<ElementId> elementIds)
+        private List<ElementId> GetMechanicalEquipment(Autodesk.Revit.DB.Document doc,List<ElementId> elementIds)
         {
             List<ElementId> resultterminals = new List<ElementId>();
 
