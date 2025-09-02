@@ -22,6 +22,8 @@ using Autodesk.Revit.DB.Visual;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using Microsoft.Win32;
+using OfficeOpenXml;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace HeatingPipeV5
 {
@@ -183,6 +185,9 @@ namespace HeatingPipeV5
                                 }
                             }
                        }
+                       var danfossRooms= GetDanfossRooms(mep_rooms);
+                        SaveFile(doc, danfossRooms);
+                       
                         
                         break;
                 }
@@ -197,6 +202,102 @@ namespace HeatingPipeV5
 
             return Result.Succeeded;
         }
+        private List<DanfossRoom> GetDanfossRooms (List<Element> mep_rooms)
+        {
+            List<DanfossRoom> danfoss_rooms = new List<DanfossRoom>();
+            foreach (var mep_room in mep_rooms)
+            {
+                if (mep_room!=null /*|| mep_room.get_Parameter(BuiltInParameter.ROOM_AREA).AsDouble()==0*/)
+                {
+                    if(mep_room.Id.IntegerValue==5410085)
+                    {
+                        var meproom1 = mep_room;
+                    }
+                    try
+                    {
+                        DanfossRoom danfossRoom = new DanfossRoom(mep_room);
+                        danfoss_rooms.Add(danfossRoom);
+                    }
+                    catch (Exception ex)
+                    {
+                       TaskDialog.Show("Ошибка создания пространства", ex.ToString());
+                    }
+                   
+                }
+                
+            }
+
+            return danfoss_rooms;
+        }
+        private void SaveFile(Autodesk.Revit.DB.Document doc, List<DanfossRoom> danfossRooms)
+        {
+            if (danfossRooms == null || danfossRooms.Count == 0) return;
+
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                Title = "Выберите папку для сохранения документа",
+                FileName = doc.Title,
+                Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*"
+            };
+
+            if (saveFileDialog.ShowDialog() != true) return;
+
+            string filePath = saveFileDialog.FileName; // полный путь выбранного файла
+
+            ExcelPackage.License.SetNonCommercialOrganization("Министерство нехороших дел");
+
+            try
+            {
+                using (var package = new ExcelPackage(new FileInfo(filePath)))
+                {
+                    var worksheet = package.Workbook.Worksheets.Add("Пространства");
+                    for (int c = 1; c <= 11; c++) worksheet.Column(c).Width = 15;
+                    worksheet.Column(1).Width = 20;
+                    worksheet.Column(2).Width = 60;
+
+                    
+                    worksheet.Cells[1, 1].Value = "Символ";
+                    worksheet.Cells[1, 2].Value = "A";
+                    worksheet.Cells[1, 3].Value = "Θ+intH";
+                    worksheet.Cells[1, 4].Value = "Θ+intC";
+                    worksheet.Cells[1, 5].Value = "ΦHL";
+                    worksheet.Cells[1, 6].Value = "ΦHG";
+                    worksheet.Cells[1, 7].Value = "A1p";
+                    worksheet.Cells[1, 8].Value = "ΦCL";
+                    worksheet.Cells[1, 9].Value = "Комнатный термостат";
+                    worksheet.Cells[1, 10].Value = "Описание";
+                    worksheet.Cells[1, 11].Value = "Комментарии";
+
+                    for (int i = 0; i < danfossRooms.Count; i++)
+                    {
+                        var r = danfossRooms[i];
+                        int row = i + 2;
+                        
+                        worksheet.Cells[row, 1].Value = r.Symbol;
+                        worksheet.Cells[row, 2].Value = r.Area;
+                        worksheet.Cells[row, 3].Value = r.TempInt;
+                        worksheet.Cells[row, 4].Value = r.TempOut;
+                        worksheet.Cells[row, 5].Value = r.HeatLoad;
+                        worksheet.Cells[row, 6].Value = r.HeatAuto;
+                        worksheet.Cells[row, 7].Value = r.Area1P;
+                        worksheet.Cells[row, 8].Value = r.ColdLoad;
+                        worksheet.Cells[row, 9].Value = r.RoomTermostate;
+                        worksheet.Cells[row, 10].Value = r.Description;
+                        worksheet.Cells[row, 11].Value = r.Comment;
+                    }
+
+                    package.SaveAs(new FileInfo(filePath));
+                }
+            }
+            catch (Exception ex)
+            {
+                // Логирование или уведомление пользователя
+                System.Windows.MessageBox.Show("Ошибка при сохранении Excel: " + ex.Message, "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+
         private CustomCollection GetCollection(Autodesk.Revit.DB.Document doc, List<ElementId> selectedterminals)
         {
             CustomCollection collection = new CustomCollection(doc);
