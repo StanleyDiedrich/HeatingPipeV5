@@ -40,6 +40,8 @@
            
             <Button Content="Выбрать отдельные ветви" Command="{Binding StartPartial}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
 
+            <Button Content="Нумерация отопления для данфосса" Command="{Binding NumberMepEquipmentCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
+
             <Label Content="{Binding SelectedSystems}" Margin="10" FontWeight="Bold"/>
         </StackPanel>
 

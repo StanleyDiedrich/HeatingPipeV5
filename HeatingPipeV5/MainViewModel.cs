@@ -211,6 +211,14 @@ namespace HeatingPipeV5
             Window.Close();
             
         }
+
+        public ICommand NumberMepEquipmentCommand { get; }
+        public void NumberMepEquipment(object param)
+        {
+            StartFunction = Regime.MEP_HEATING_COLLECTION;
+            Window.Close();
+        }
+
         public ICommand ShowSelectedSystemsCommand { get; }
 
         public void ShowSelectedSystems(object param)
@@ -305,6 +313,7 @@ namespace HeatingPipeV5
             StartCommand = new RelayCommand(StartCalculate);
             StartPartial = new RelayCommand(PartialCalc);
             CollectMepRoomsCommand = new RelayCommand(CollectMepRooms);
+            NumberMepEquipmentCommand = new RelayCommand(NumberMepEquipment);
           
         }
 

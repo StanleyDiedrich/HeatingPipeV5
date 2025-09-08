@@ -191,7 +191,37 @@ namespace HeatingPipeV5
                         
                         break;
                 }
+                case Regime.MEP_HEATING_COLLECTION:
+                {
+                        var systemNames = mainViewModel.SystemNumbersList
+                            .Where(x => x.IsSelected)
+                            .Select(x => x.SystemName);
 
+                        var mep_rooms = GetMepRooms(doc);
+                        
+                        
+
+                        foreach (var systemName in systemNames)
+                        {
+                            var mep_equipment = GetMechanicalEquipment(doc, systemName);
+                            var collection = GetCollection(doc, mep_equipment);
+
+                            collection.Calcualate(mainViewModel.Density);
+                            collection.GetLength();
+                            collection.OrderByLength(doc);
+                            collection.MarkBranches();
+                            /*collection.ResCalculate();
+
+                            var selectedBranch = collection.SelectMainBranch();
+
+                            collection.MarkCollection(selectedBranch);*/
+                            var content = collection.GetContent();
+                            collection.SaveFile(content);
+                        }
+                        
+                        
+                    break;
+                }
                 default:
                     // необязательная обработка по умолчанию
                     break;
@@ -202,6 +232,17 @@ namespace HeatingPipeV5
 
             return Result.Succeeded;
         }
+
+        private List<Element> GetMepRooms(Autodesk.Revit.DB.Document doc)
+        {
+            List<Element> mep_rooms = new List<Element>();
+
+            FilteredElementCollector filter = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_MEPSpaces);
+            mep_rooms = filter.WhereElementIsNotElementType().ToList();
+
+            return mep_rooms;
+        }
+
         private List<DanfossRoom> GetDanfossRooms (List<Element> mep_rooms)
         {
             List<DanfossRoom> danfoss_rooms = new List<DanfossRoom>();

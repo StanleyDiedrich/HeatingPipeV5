@@ -27,7 +27,7 @@ namespace HeatingPipeV5
         public string ShortSystemName { get; set; }
         public string Lvl { get; set; }
         public PipeSystemType SystemType { get; set; }
-       
+
         public CustomConnector SelectedConnector { get; set; }
         public CustomConnector SupplyConnector { get; set; }
         public CustomConnector ReturnConnector { get; set; }
@@ -60,6 +60,8 @@ namespace HeatingPipeV5
         public string HeatLoss { get; set; }
         public string AuditorLevel { get; set; }
         public bool IsSupply { get; set; }
+
+        public string Direction { get; set; }
         public enum Detail
         {
             
@@ -93,10 +95,13 @@ namespace HeatingPipeV5
         public Detail DetailType { get; set; }
         public int TrackNumber { get; set; }
         public int BranchNumber { get; set; }
+        public string BranchMark { get; set; }
         public int GroupNumber { get; set; }
         public int LevelNumber { get; set; }
         public bool MainTrack { get; set; }
         public string RelPres { get; set; }
+
+        public string MepSpace { get; set; }
         private string GetValue(string primaryvolume)
         {
             // Используем регулярное выражение, чтобы найти и вернуть только числовую часть
@@ -105,6 +110,7 @@ namespace HeatingPipeV5
         }
         public CustomElement(Autodesk.Revit.DB.Document doc, ElementId elementId)
         {
+           
             if (elementId == null)
             {
                 return;
@@ -421,6 +427,7 @@ namespace HeatingPipeV5
 
             if (Element is FamilyInstance)
             {
+               
                 Model = (Element as FamilyInstance).MEPModel;
                 if ((Model as MechanicalFitting) != null)
                 {
@@ -457,6 +464,7 @@ namespace HeatingPipeV5
                 }
                 else if (Element.Category.Id.IntegerValue == -2001140)
                 {
+                    
                     DetailType = Detail.Equipment;
                 }
                 /*else if (Element.LookupParameter("ТипДетали").AsString())

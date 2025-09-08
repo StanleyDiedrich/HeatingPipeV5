@@ -52,6 +52,12 @@ namespace HeatingPipeV5
 
         }
 
+        public CustomCollection(Autodesk.Revit.DB.Document doc, List<CustomBranch> branches)
+        {
+            Document = doc;
+            Collection = branches;
+        }
+
         public List<ElementId> ShowElements(int number)
         {
             // Параметр number должен находиться в допустимом диапазоне
@@ -301,6 +307,19 @@ namespace HeatingPipeV5
                 }
 
             }
+        }
+        public void MarkBranches()
+        {
+            foreach (var branch in Collection)
+            {
+                
+                foreach (var element in branch.Elements)
+                {
+                    element.BranchNumber = branch.Number;
+                    element.TrackNumber++;
+                }
+            }
+            
         }
         public CustomBranch SelectMainBranch()
         {
@@ -660,7 +679,7 @@ namespace HeatingPipeV5
         public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("Level Архитектурный;DetalType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График");
+            csvcontent.AppendLine("Id;Level Архитектурный;DetalType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График"); ;
 
            
 
@@ -669,8 +688,8 @@ namespace HeatingPipeV5
                 
                 foreach (var element in branch.Elements)
                 {
-                    string a = $"{element.Lvl};{element.DetailType};{element.BranchNumber};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};" +
-                         $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchNumber}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
+                    string a = $"{element.ElementId};{element.Lvl};{element.DetailType};{element.BranchMark};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};" +
+                         $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchMark}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
                         
                     csvcontent.AppendLine(a);
                 }
@@ -750,6 +769,31 @@ namespace HeatingPipeV5
             // Используем регулярное выражение, чтобы найти и вернуть только числовую часть
             var match = System.Text.RegularExpressions.Regex.Match(primaryvolume, @"\d+(\.\d+)?");
             return match.Success ? match.Value : string.Empty; // Вернуть число или пустую строку, если числ
+        }
+
+        public void GetLength()
+        {
+            foreach (var branch in Collection)
+            {
+                foreach (var element in branch.Elements)
+                {
+                    if (element.DetailType is CustomElement.Detail.Pipe || element.DetailType is CustomElement.Detail.FlexPipe) 
+                    {
+                        double pipeLength = Convert.ToDouble(element.ModelLength.Split()[0]);
+                        branch.Length += pipeLength;
+                    }
+                }
+            }
+        }
+
+        public CustomCollection OrderByLength(Autodesk.Revit.DB.Document doc)
+        {
+           
+            var sorted = Collection
+                 .OrderByDescending(branch => branch.Length)   // от большего к меньшему
+                 .ToList();
+            CustomCollection newCollection = new CustomCollection(doc, sorted);
+            return newCollection;
         }
     }
 }

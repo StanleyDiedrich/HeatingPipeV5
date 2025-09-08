@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using System.Xml.Linq;
 using Autodesk.Revit.DB;
 
@@ -17,7 +18,8 @@ namespace HeatingPipeV5
         public int GroupNumber { get; set; }
         public double Pressure { get; set; }
         public double Length { get; set; }
-
+        public string BranchNumber { get; set; }
+        public string Direction { get; set; }
         public double RelPressure { get; set; }
         public double LTot { get; set; }
         public double PBTot { get; set; }
@@ -26,12 +28,14 @@ namespace HeatingPipeV5
         {
             Document = document;
             
-            Number = _counter;
-            _counter++;
+           /* Number = _counter;
+            _counter++;*/
         }
         public CustomBranch(Autodesk.Revit.DB.Document document)
         {
             Document = document;
+           /* Number = _counter;
+            _counter++;*/
         }
         public void Add(CustomElement customElement)
         {
@@ -88,15 +92,34 @@ namespace HeatingPipeV5
 
         public void CreateNewBranch(Document document, ElementId airterminal)
         {
+
+            
+                Number = _counter;
+           
             ElementId nextElement = null;
+
             CustomElement customElement = new CustomElement(document, airterminal);
+            customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
+            BranchNumber = customElement.MepSpace;
+            customElement.Direction = "П";
+            customElement.BranchMark = BranchNumber +"_"+ customElement.Direction + "_" + Number.ToString();
+
+
+
+
             Elements.Add(customElement);
             var nextsupplyelement = customElement.SupplyConnector.NextOwnerId;
             var nextreturnelement = customElement.ReturnConnector.NextOwnerId;
            
             CustomElement customElementSup = new CustomElement(document, nextsupplyelement);
+            customElementSup.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
+            BranchNumber = customElementSup.MepSpace;
+            customElementSup.Direction = "П";
+            customElementSup.BranchMark = BranchNumber +"_"+ customElementSup.Direction + "_" + Number.ToString();
+
             do
             {
+                
                 Elements.Add(customElementSup);
                 nextElement = customElementSup.NextElementId;
                 if (customElementSup.OwnConnectors.Size>3)
@@ -105,17 +128,34 @@ namespace HeatingPipeV5
                 }
                 customElementSup = new CustomElement(document, nextElement);
                 customElementSup.IsSupply = true;
+                customElementSup.Direction = "П";
+                customElementSup.BranchMark = BranchNumber+"_" +customElementSup.Direction+"_"+Number.ToString();
             }
             while (nextElement != null);
 
 
 
-            CustomElement customElementRet = new CustomElement(document, nextreturnelement);
             
+            CustomElement customElementRet = new CustomElement(document, nextreturnelement);
+            if (customElementRet.ElementId.IntegerValue == 4080858)
+            {
+                var airt = airterminal;
+            }
+            //customElementRet.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
+            BranchNumber = customElementSup.MepSpace;
+            customElementRet.Direction = "О";
+            customElementRet.BranchMark = customElement.MepSpace +"_"+ customElementRet.Direction + "_" + Number.ToString();
             do
             {
+                if (customElementRet.ElementId.IntegerValue == 4080864)
+                {
+                    var airt = airterminal;
+                }
+                
 
                 Elements.Add(customElementRet);
+
+               
                 nextElement = customElementRet.NextElementId;
                 if (customElementRet.OwnConnectors.Size>3)
                 {
@@ -123,9 +163,12 @@ namespace HeatingPipeV5
                 }
                 customElementRet = new CustomElement(document, nextElement);
                 customElementRet.IsSupply = false;
+                customElementRet.Direction = "О";
+                customElementRet.BranchMark = customElement.MepSpace + "_" + customElementRet.Direction + "_" + Number.ToString();
             }
             while (nextElement != null);
-
+            BranchNumber = Number. ToString();
+            _counter++;
         }
 
         public List<ElementId> ShowElements ()
