@@ -115,6 +115,10 @@ namespace HeatingPipeV5
             {
                 return;
             }
+            if (elementId.IntegerValue == 4080876)
+            {
+                var el = elementId;
+            }
             ElementId = elementId;
             Element = doc.GetElement(ElementId);
             ElementName = Element.Name;
@@ -216,6 +220,10 @@ namespace HeatingPipeV5
                                                 {
                                                     DetailType = Detail.Pipe;
                                                     custom.Diameter = connect.Radius * 2;
+                                                    string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsValueString();
+                                                    ModelDiameter = primarydiameter;
+                                                    DiameterInner = ModelDiameter;
+                                                    DiameterOuter = ModelDiameter;
                                                     //custom.EquiDiameter = custom.Diameter;
                                                     //string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsValueString();
                                                     // ModelDiameter = primarydiameter;
@@ -247,10 +255,14 @@ namespace HeatingPipeV5
                                                 {
                                                     DetailType = Detail.Pipe;
                                                     custom.Diameter = connect.Radius * 2;
+                                                    string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsValueString();
+                                                    ModelDiameter = primarydiameter;
+                                                    DiameterInner = ModelDiameter;
+                                                    DiameterOuter = ModelDiameter;
                                                     //custom.EquiDiameter = custom.Diameter;
                                                     //string primarydiameter = Element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsValueString();
                                                     //ModelDiameter = primarydiameter;
-                                                   
+
                                                 }
                                                 
                                                 custom.Coefficient = connect.Coefficient;

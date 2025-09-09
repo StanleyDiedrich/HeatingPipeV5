@@ -99,6 +99,15 @@ namespace HeatingPipeV5
                 {
                     foreach (var element in branch.Elements)
                     {
+                      if (element.ElementId.IntegerValue==4080858)
+                        {
+                            var element3 = element;
+                        }
+
+                        if (element.ElementId.IntegerValue == 4080858)
+                        {
+                            var element2 = element;
+                        }
 
                         if (element.DetailType == CustomElement.Detail.Equipment)
                         {
@@ -171,7 +180,7 @@ namespace HeatingPipeV5
                         }
                         else if (element.DetailType == CustomElement.Detail.Tee)
                         {
-                            if (element.ElementId.IntegerValue == 6253444)
+                            if (element.ElementId.IntegerValue == 4083974)
                             {
                                 var element2 = element;
                             }
@@ -194,14 +203,14 @@ namespace HeatingPipeV5
                             }
                             else
                             {
-                                CustomTee customTee = new CustomTee(Document, element);
-                                element.LocRes = customTee.LocRes;
-                                element.PDyn = customTee.PDyn;
+                               // CustomTee customTee = new CustomTee(Document, element);
+                                //element.LocRes = customTee.LocRes;
+                               // element.PDyn = customTee.PDyn;
                                 element.ModelLength = "-";
-                                element.Volume = String.Join("-", Math.Round(customTee.InletConnector.Flow, 2),
-                                             Math.Round(customTee.OutletConnector1.Flow, 2),
-                                             Math.Round(customTee.OutletConnector2.Flow, 2));
-                                element.ModelVelocity = String.Join("-", Math.Round(customTee.InletConnector.Velocity, 2), Math.Round(customTee.OutletConnector1.Velocity, 2), Math.Round(customTee.OutletConnector2.Velocity, 2));
+                                //element.Volume = String.Join("-", Math.Round(customTee.InletConnector.Flow, 2),
+                                 //            Math.Round(customTee.OutletConnector1.Flow, 2),
+                                   //          Math.Round(customTee.OutletConnector2.Flow, 2));
+                                //element.ModelVelocity = String.Join("-", Math.Round(customTee.InletConnector.Velocity, 2), Math.Round(customTee.OutletConnector1.Velocity, 2), Math.Round(customTee.OutletConnector2.Velocity, 2));
                                 //CustomTee customTee = new CustomTee(Document, element);
                                 //element.LocRes = customTee.LocRes;
                                 //element.PDyn = Density * Math.Pow(customTee.Velocity, 2) / 2 * element.LocRes;
@@ -227,9 +236,9 @@ namespace HeatingPipeV5
                         }*/
                         else if (element.DetailType == CustomElement.Detail.Transition)
                         {
-                            if (element.ElementId.IntegerValue == 5981916)
+                           if (element.ElementId.IntegerValue == 4084072)
                             {
-                                var element2 = element;
+                                var el = element;
                             }
 
                             CustomTransition customTransition = new CustomTransition(Document, element);
@@ -237,7 +246,7 @@ namespace HeatingPipeV5
                             element.PDyn = customTransition.PDyn;
                             element.ModelLength = "1";
                             element.Unit = "шт";
-                            element.DiameterOuter = element.Element.get_Parameter(BuiltInParameter.RBS_CALCULATED_SIZE).AsString();
+                            element.DiameterOuter = element.Element.get_Parameter(BuiltInParameter.RBS_CALCULATED_SIZE).AsString().Split('-')[0];
                             //CustomTransition customTransition = new CustomTransition(Document, element);
 
                             /*element.LocRes = customTransition.LocRes;

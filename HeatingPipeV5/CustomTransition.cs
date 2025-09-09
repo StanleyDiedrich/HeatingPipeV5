@@ -91,7 +91,7 @@ namespace HeatingPipeV5
                                     if (SystemType == PipeSystemType.SupplyHydronic)
                                     {
 
-                                        if (connect.Direction == FlowDirectionType.Out)
+                                        if (connect.Direction == FlowDirectionType.Out || connect.Direction == FlowDirectionType.Bidirectional)
                                         {
                                             custom.Flow = connect.Flow;
                                             custom.Domain = Domain.DomainHvac;
@@ -132,7 +132,7 @@ namespace HeatingPipeV5
 
                                             //SecondaryConnectors.Add(custom);
                                         }
-                                        if (connect.Direction == FlowDirectionType.In)
+                                        if (connect.Direction == FlowDirectionType.In || connect.Direction == FlowDirectionType.Bidirectional)
                                         {
                                             custom.Flow = connect.Flow;
                                             custom.Domain = Domain.DomainHvac;
@@ -178,7 +178,7 @@ namespace HeatingPipeV5
                                     }
                                     else if (SystemType == PipeSystemType.ReturnHydronic)
                                     {
-                                        if (connect.Direction == FlowDirectionType.In)
+                                        if (connect.Direction == FlowDirectionType.In || connect.Direction == FlowDirectionType.Bidirectional)
                                         {
                                             custom.Flow = connect.Flow;
                                             custom.Domain = Domain.DomainHvac;
