@@ -41,6 +41,7 @@ namespace HeatingPipeV5
         public string ModelDiameter { get; set; }
         public string DiameterInner { get; set; }
         public string DiameterOuter { get; set; }
+        public string DiameterNominal { get; set; }
         public string Unit { get; set; }
         public string ModelVelocity { get; set; }
         public string ModelHydraulicDiameter { get; set; }

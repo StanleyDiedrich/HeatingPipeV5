@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Autodesk.Revit.Creation;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Plumbing;
 
 namespace HeatingPipeV5
 {
@@ -40,9 +42,13 @@ namespace HeatingPipeV5
             Volume = Convert.ToString(Math.Round(Element.get_Parameter(BuiltInParameter.RBS_PIPE_FLOW_PARAM).AsDouble() * 102,2));
             FlowVelocity = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_VELOCITY_PARAM).AsValueString().Split()[0]);
             Roughness = Element.get_Parameter(BuiltInParameter.RBS_PIPE_ROUGHNESS_PARAM).AsDouble() * 304.8;
-            Diameter = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_INNER_DIAM_PARAM).AsValueString())/1000;
+
+            GetCorrectDiameter(element);
+           
+            
+           /* Diameter = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_INNER_DIAM_PARAM).AsValueString())/1000;
             DiameterInner = (Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_INNER_DIAM_PARAM).AsValueString()) / 1000).ToString();
-            DiameterOuter = (Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER).AsValueString()) / 1000).ToString();
+            DiameterOuter = (Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER).AsValueString()) / 1000).ToString();*/
 
             Length = Element.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsDouble() * 304.8/1000;
             Viscosity visosity = new Viscosity();
@@ -58,6 +64,48 @@ namespace HeatingPipeV5
                 Pressure = 0;
             }
         }
+
+        private void GetCorrectDiameter(CustomElement element)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+
+            var name = element.ElementName ?? string.Empty;
+
+            if (name.Contains("GOST3262-75"))
+            {
+                PipeGOST3262Catalog catalog = new PipeGOST3262Catalog();
+                double innerDiameter = Convert.ToDouble(element.DiameterInner);
+                double outerDiameter = Convert.ToDouble(element.DiameterOuter);
+                var pipe = PipeSize.FindBestMatch(catalog, outerDiameter, innerDiameter, 5);
+                element.DiameterInner = Convert.ToString(pipe.InnerDiameter);
+                element.DiameterOuter = Convert.ToString(pipe.OuterDiameter);
+                element.DiameterNominal = Convert.ToString(pipe.Diameter);
+
+
+            }
+            else if (name.Contains("GOST10704"))
+            {
+                PipeGost10704Catalog catalog = new PipeGost10704Catalog();
+                 double innerDiameter = Convert.ToDouble(element.DiameterInner);
+                double outerDiameter = Convert.ToDouble(element.DiameterOuter);
+                var pipe = PipeSize.FindBestMatch(catalog, outerDiameter, innerDiameter, 5);
+                element.DiameterInner = Convert.ToString(pipe.InnerDiameter);
+                element.DiameterOuter = Convert.ToString(pipe.OuterDiameter);
+                element.DiameterNominal = Convert.ToString(pipe.Diameter);
+            }
+            else if (name.Contains("PEX"))
+            {
+                ValtecPexACatalog catalog = new ValtecPexACatalog();
+                double innerDiameter = Convert.ToDouble(element.DiameterInner);
+                double outerDiameter = Convert.ToDouble(element.DiameterOuter);
+                var pipe = PipeSize.FindBestMatch(catalog, outerDiameter, innerDiameter, 5);
+                element.DiameterInner = Convert.ToString(pipe.InnerDiameter);
+                element.DiameterOuter = Convert.ToString(pipe.OuterDiameter);
+                element.DiameterNominal = Convert.ToString(pipe.Diameter);
+            }
+            
+        }
+       
 
         private double GetLambda(double reynolds, double roughness)
         {

@@ -171,7 +171,7 @@ namespace HeatingPipeV5
                             element.LocRes = customElbow.LocRes;
                             element.PDyn = customElbow.PDyn;
                             element.ModelLength = "1";
-                            element.DiameterOuter = element.Element.get_Parameter(BuiltInParameter.RBS_CALCULATED_SIZE).AsString();
+                            element.DiameterOuter = element.Element.get_Parameter(BuiltInParameter.RBS_CALCULATED_SIZE).AsString().Split('-')[0];
                             //CustomElbow customElbow = new CustomElbow(Document, element);
                             //element.LocRes = customElbow.LocRes;
                             //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
@@ -257,7 +257,7 @@ namespace HeatingPipeV5
 
                         else if (element.DetailType == CustomElement.Detail.Pipe)
                         {
-                            if (element.ElementId.IntegerValue == 2214675)
+                            if (element.ElementId.IntegerValue == 4082191)
                             {
                                 ElementId el = element.ElementId;
                             }
@@ -688,7 +688,7 @@ namespace HeatingPipeV5
         public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("Id;Level Архитектурный;DetalType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График"); ;
+            csvcontent.AppendLine("Id;Level Архитектурный;DetalType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Dном;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График"); ;
 
            
 
@@ -697,7 +697,7 @@ namespace HeatingPipeV5
                 
                 foreach (var element in branch.Elements)
                 {
-                    string a = $"{element.ElementId};{element.Lvl};{element.DetailType};{element.BranchMark};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};" +
+                    string a = $"{element.ElementId};{element.Lvl};{element.DetailType};{element.BranchMark};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};{element.DiameterNominal};" +
                          $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchMark}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
                         
                     csvcontent.AppendLine(a);
