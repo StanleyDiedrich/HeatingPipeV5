@@ -43,6 +43,10 @@ namespace HeatingPipeV5
             FlowVelocity = Convert.ToDouble(Element.get_Parameter(BuiltInParameter.RBS_PIPE_VELOCITY_PARAM).AsValueString().Split()[0]);
             Roughness = Element.get_Parameter(BuiltInParameter.RBS_PIPE_ROUGHNESS_PARAM).AsDouble() * 304.8;
 
+            element.DiameterInner = (Convert.ToDouble(element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_INNER_DIAM_PARAM).AsValueString())).ToString();
+            element.DiameterOuter = (Convert.ToDouble(element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER).AsValueString())).ToString();
+            element.DiameterNominal = (Convert.ToDouble(element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsValueString())).ToString();
+
             GetCorrectDiameter(element);
            
             
@@ -73,7 +77,11 @@ namespace HeatingPipeV5
 
             if (name.Contains("GOST3262-75"))
             {
-                PipeGOST3262Catalog catalog = new PipeGOST3262Catalog();
+                if (element.ElementId.IntegerValue == 4083970)
+                {
+                    var el = element;
+                }
+                    PipeGOST3262Catalog catalog = new PipeGOST3262Catalog();
                 double innerDiameter = Convert.ToDouble(element.DiameterInner);
                 double outerDiameter = Convert.ToDouble(element.DiameterOuter);
                 var pipe = PipeSize.FindBestMatch(catalog, outerDiameter, innerDiameter, 5);

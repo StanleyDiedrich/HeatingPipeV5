@@ -98,27 +98,24 @@ namespace HeatingPipeV5
 
             foreach (var s in sizes.Catalog)
             {
-                // расстояние (можно изменить на взвешенное)
-                double score = Math.Abs(s.OuterDiameter - targetOuter) + Math.Abs(s.InnerDiameter - targetInner);
+                
+                if (targetInner == Math.Round(s.InnerDiameter) || targetOuter==Math.Round(s.OuterDiameter))
+                {
+                    best = s;
+                    return best;
+                }
+               /* double score = Math.Abs(s.OuterDiameter - targetOuter) + Math.Abs(s.InnerDiameter - targetInner);
 
-                // альтернатива: use max deviation instead of sum:
-                // double score = Math.Max(Math.Abs(s.OuterDiameter - targetOuter), Math.Abs(s.InnerDiameter - targetInner));
+                
 
                 if (score < bestScore)
                 {
                     bestScore = score;
                     best = s;
-                }
+                }*/
             }
 
-            // если нужно применять предел допусков — проверяем:
-           /* if (best != null)
-            {
-                double outerDiff = Math.Abs(best.OuterDiameter - targetOuter);
-                double innerDiff = Math.Abs(best.InnerDiameter - targetInner);
-                if (outerDiff > maxTolerance || innerDiff > maxTolerance)
-                    return null; // ничего не подошло по допускам
-            }*/
+           
 
             return best;
         }

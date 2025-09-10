@@ -23,7 +23,7 @@ namespace HeatingPipeV5
 
     public class CustomCollection
     {
-        List<CustomBranch> Collection { get; set; } = new List<CustomBranch>();
+       public  List<CustomBranch> Collection { get; set; } = new List<CustomBranch>();
         Autodesk.Revit.DB.Document Document { get; set; }
         public double Density { get; set; }
 
@@ -171,7 +171,7 @@ namespace HeatingPipeV5
                             element.LocRes = customElbow.LocRes;
                             element.PDyn = customElbow.PDyn;
                             element.ModelLength = "1";
-                            element.DiameterOuter = element.Element.get_Parameter(BuiltInParameter.RBS_CALCULATED_SIZE).AsString().Split('-')[0];
+                            element.DiameterNominal = element.Element.get_Parameter(BuiltInParameter.RBS_CALCULATED_SIZE).AsString().Split('-')[0];
                             //CustomElbow customElbow = new CustomElbow(Document, element);
                             //element.LocRes = customElbow.LocRes;
                             //element.PDyn = Density * Math.Pow(customElbow.Velocity, 2) / 2 * element.LocRes;
@@ -276,6 +276,7 @@ namespace HeatingPipeV5
                             element.Unit = "м";
                             element. DiameterInner = (Convert.ToDouble(element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_INNER_DIAM_PARAM).AsValueString())).ToString();
                             element.DiameterOuter = (Convert.ToDouble(element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_OUTER_DIAMETER).AsValueString())).ToString();
+                            element.DiameterNominal = (Convert.ToDouble(element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsValueString())).ToString();
                             /*branch.Pressure += element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsDouble();
                             string[] pressureDropString = element.Element.get_Parameter(BuiltInParameter.RBS_PIPE_PRESSUREDROP_PARAM).AsValueString().Split();
                             element.PStat = double.Parse(pressureDropString[0], formatter);*/
@@ -688,7 +689,7 @@ namespace HeatingPipeV5
         public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("Id;Level Архитектурный;DetalType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Dном;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График"); ;
+            csvcontent.AppendLine("Id;Level Архитектурный;DetalType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Dном;Volume;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График"); ;
 
            
 
@@ -697,7 +698,7 @@ namespace HeatingPipeV5
                 
                 foreach (var element in branch.Elements)
                 {
-                    string a = $"{element.ElementId};{element.Lvl};{element.DetailType};{element.BranchMark};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};{element.DiameterNominal};" +
+                    string a = $"{element.ElementId};{element.Lvl};{element.DetailType};{element.BranchMark};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};{element.DiameterNominal};{element.VolumeDouble};" +
                          $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchMark}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
                         
                     csvcontent.AppendLine(a);
@@ -803,6 +804,75 @@ namespace HeatingPipeV5
                  .ToList();
             CustomCollection newCollection = new CustomCollection(doc, sorted);
             return newCollection;
+        }
+
+        public void MarkPipes()
+        {
+            
+            foreach (var branch in Collection)
+            {
+                int trackNumber = 0;
+                for (int i =1; i<branch.Elements.Count;i++)
+                {
+                    var previousElement = branch.Elements[i - 1];
+                    var currentElement = branch.Elements[i];
+
+                    if (currentElement.DetailType == CustomElement.Detail.Pipe)
+                    {
+                        if (previousElement.DetailType==CustomElement.Detail.Elbow || previousElement.DetailType==CustomElement.Detail.Union)
+                        {
+                            currentElement.TrackNumber = trackNumber;
+                        }
+                        if (previousElement.DetailType==CustomElement.Detail.Contraction || previousElement.DetailType==CustomElement.Detail.Expansion || previousElement.DetailType == CustomElement.Detail.Tee || previousElement.DetailType == CustomElement.Detail.Manifold)
+                        {
+                            trackNumber++;
+                            currentElement.TrackNumber = trackNumber;
+                        }
+                       
+
+                    }
+                    if (currentElement.DetailType == CustomElement.Detail.Contraction || currentElement.DetailType == CustomElement.Detail.Expansion || currentElement.DetailType == CustomElement.Detail.Tee || currentElement.DetailType == CustomElement.Detail.Manifold)
+                    {
+                        //trackNumber++;
+                        currentElement.TrackNumber = trackNumber;
+                    }
+                    if(currentElement.DetailType==CustomElement.Detail.Elbow || currentElement.DetailType==CustomElement.Detail.Union)
+                    {
+                        currentElement.TrackNumber = trackNumber;
+                    }
+
+
+                   
+                }
+            }
+        }
+
+        internal List<DanfossPipe> GetDanfossElements()
+        {
+            var result = new List<DanfossPipe>();
+
+            foreach (var branch in Collection)
+            {
+                // Берём только трубы в этой ветке
+                var pipes = branch.Elements
+                                  .Where(x => x.DetailType == CustomElement.Detail.Pipe);
+
+                // Группируем по TrackNumber и для каждой группы создаём DanfossPipe
+                var trackedPipes = pipes.GroupBy(x => x.TrackNumber);
+
+                foreach (var group in trackedPipes)
+                {
+                    var list = group.ToList();
+                    if (list.Count == 0)
+                        continue;
+
+                    // Конструктор DanfossPipe ожидает IEnumerable<CustomElement> или List<CustomElement>
+                    var danfossPipe = new DanfossPipe(list);
+                    result.Add(danfossPipe);
+                }
+            }
+
+            return result;
         }
     }
 }

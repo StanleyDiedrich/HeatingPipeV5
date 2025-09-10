@@ -209,14 +209,18 @@ namespace HeatingPipeV5
                             collection.Calcualate(mainViewModel.Density);
                             collection.GetLength();
                             collection.OrderByLength(doc);
-                            collection.MarkBranches();
+                            collection.MarkPipes();
+                            //collection.MarkBranches();
                             /*collection.ResCalculate();
 
                             var selectedBranch = collection.SelectMainBranch();
 
                             collection.MarkCollection(selectedBranch);*/
-                            var content = collection.GetContent();
-                            collection.SaveFile(content);
+                            //var content = collection.GetContent();
+                            List<DanfossPipe> danfossElements = collection.GetDanfossElements();
+                           
+                            SaveFile(doc, danfossElements );
+                            //collection.SaveFile(content);
                         }
                         
                         
@@ -232,6 +236,10 @@ namespace HeatingPipeV5
 
             return Result.Succeeded;
         }
+
+       
+
+        
 
         private List<Element> GetMepRooms(Autodesk.Revit.DB.Document doc)
         {
@@ -338,6 +346,104 @@ namespace HeatingPipeV5
             }
         }
 
+
+        private void SaveFile(Autodesk.Revit.DB.Document doc, List<DanfossPipe> danfossPipes)
+        {
+            if (danfossPipes == null || danfossPipes.Count == 0) return;
+
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                Title = "Выберите папку для сохранения документа",
+                FileName = doc.Title+"_Трубы",
+                Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*"
+            };
+
+            if (saveFileDialog.ShowDialog() != true) return;
+
+            string filePath = saveFileDialog.FileName; // полный путь выбранного файла
+
+            ExcelPackage.License.SetNonCommercialOrganization("Министерство нехороших дел");
+
+            try
+            {
+                using (var package = new ExcelPackage(new FileInfo(filePath)))
+                {
+                    var worksheet = package.Workbook.Worksheets.Add("Трубы");
+                    for (int c = 1; c <= 21; c++) worksheet.Column(c).Width = 15;
+                    worksheet.Column(1).Width = 20;
+                    worksheet.Column(2).Width = 60;
+
+                    worksheet.Cells[1, 1].Value = "Ids";
+                    worksheet.Cells[1, 2].Value = "Тип";
+                    worksheet.Cells[1, 3].Value = "Труба";
+                    worksheet.Cells[1, 4].Value = "Тип трубы";
+                    worksheet.Cells[1, 5].Value = "Стояк";
+                    worksheet.Cells[1, 6].Value = "Участок";
+                    worksheet.Cells[1, 7].Value = "Dn";
+                    worksheet.Cells[1, 8].Value = "Изоляция";
+                    worksheet.Cells[1, 9].Value = "Тизо";
+                    worksheet.Cells[1, 10].Value = "Длина";
+                   
+                   
+                    worksheet.Cells[1, 11].Value = "Ост";
+                    worksheet.Cells[1, 12].Value = "Уровень";
+                    worksheet.Cells[1, 13].Value = "Помещение";
+
+                    worksheet.Cells[1, 14].Value = "Отв";
+                    worksheet.Cells[1, 15].Value = "О/д";
+                    worksheet.Cells[1, 16].Value = "Сос";
+
+                    worksheet.Cells[1, 17].Value = "Комментарии";
+                    worksheet.Cells[1, 18].Value = "Символ";
+                    worksheet.Cells[1, 19].Value = "Производитель";
+                    worksheet.Cells[1, 20].Value = "Описание";
+                    worksheet.Cells[1, 21].Value = "Отнач";
+                    worksheet.Cells[1, 22].Value = "Откон";
+
+
+
+
+                    for (int i = 0; i < danfossPipes.Count; i++)
+                    {
+                        var r = danfossPipes[i];
+                        int row = i + 2;
+                        worksheet.Cells[row, 1].Value = r.Ids;
+                        worksheet.Cells[row, 2].Value = r.HeatingSystem;        // Тип
+                        worksheet.Cells[row, 3].Value = r.Type;                 // Труба
+                        worksheet.Cells[row, 4].Value = r.PipeType;             // Стояк
+                        worksheet.Cells[row, 5].Value = r.Riser;                // Участок
+                        worksheet.Cells[row, 6].Value = r.Part;                 // Dn
+                        worksheet.Cells[row, 7].Value = r.DiameterNominal;      // Изоляция (если поменять местами — проверьте соответствие)
+                        worksheet.Cells[row, 8].Value = r.Insulation;           // Тизо
+                        worksheet.Cells[row, 9].Value = r.InsulationThick;      // Plc
+                        worksheet.Cells[row, 10].Value = r.Length;                // L
+
+                        worksheet.Cells[row, 11].Value = r.Ost;         // Ост
+                        worksheet.Cells[row, 12].Value = r.Lvl;             // Уровень
+                        worksheet.Cells[row, 13].Value = r.Room;                // Помещение
+
+                        worksheet.Cells[row, 14].Value = r.Otv;               // Отв
+                        worksheet.Cells[row, 15].Value = r.Od;          // О/д
+                        worksheet.Cells[row, 16].Value = r.Sos;          // Сос
+
+                        worksheet.Cells[row, 17].Value = r.Comment;               // Комментарии
+                        worksheet.Cells[row, 18].Value = r.Symbol;              // Символ
+                        worksheet.Cells[row, 19].Value = r.Manufacturer;        // Производитель
+                        worksheet.Cells[row, 20].Value = r.Description;     // Описание (расширенное)
+                        worksheet.Cells[row, 21].Value = r.Onach;          // Отнач
+                        worksheet.Cells[row, 22].Value = r.Okonech;            // Откон
+
+                        package.SaveAs(new FileInfo(filePath));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Логирование или уведомление пользователя
+                System.Windows.MessageBox.Show("Ошибка при сохранении Excel: " + ex.Message, "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
 
         private CustomCollection GetCollection(Autodesk.Revit.DB.Document doc, List<ElementId> selectedterminals)
         {
