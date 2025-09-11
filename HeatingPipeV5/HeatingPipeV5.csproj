@@ -86,7 +86,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DanfossElbow.cs" />
     <Compile Include="DanfossElement.cs" />
+    <Compile Include="DanfossEquipment.cs" />
+    <Compile Include="DanfossManifold.cs" />
     <Compile Include="ValtecPexACatalog.cs" />
     <Compile Include="CustomBranch.cs" />
     <Compile Include="CustomCollection.cs" />

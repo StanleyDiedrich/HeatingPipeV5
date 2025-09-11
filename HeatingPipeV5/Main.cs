@@ -218,8 +218,11 @@ namespace HeatingPipeV5
                             collection.MarkCollection(selectedBranch);*/
                             //var content = collection.GetContent();
                             List<DanfossPipe> danfossElements = collection.GetDanfossElements();
-                           
-                            SaveFile(doc, danfossElements );
+                            List<DanfossEquipment> danfossEquipment = collection.GetDanfossEquipment();
+                            //List<DanfossElbow> danfossElbows = collection.GetDanfossElbows();
+                            List<DanfossManifold> danfossManifolds = collection.GetDanfossManifolds();
+
+                            SaveFile(doc, danfossElements,danfossEquipment, danfossManifolds);
                             //collection.SaveFile(content);
                         }
                         
@@ -347,7 +350,7 @@ namespace HeatingPipeV5
         }
 
 
-        private void SaveFile(Autodesk.Revit.DB.Document doc, List<DanfossPipe> danfossPipes)
+        private void SaveFile(Autodesk.Revit.DB.Document doc, List<DanfossPipe> danfossPipes , List<DanfossEquipment> danfossEquipment, List<DanfossManifold> danfossManifolds)
         {
             if (danfossPipes == null || danfossPipes.Count == 0) return;
 
@@ -370,7 +373,7 @@ namespace HeatingPipeV5
                 using (var package = new ExcelPackage(new FileInfo(filePath)))
                 {
                     var worksheet = package.Workbook.Worksheets.Add("Трубы");
-                    for (int c = 1; c <= 21; c++) worksheet.Column(c).Width = 15;
+                    for (int c = 1; c <= 22; c++) worksheet.Column(c).Width = 15;
                     worksheet.Column(1).Width = 20;
                     worksheet.Column(2).Width = 60;
 
@@ -400,7 +403,7 @@ namespace HeatingPipeV5
                     worksheet.Cells[1, 20].Value = "Описание";
                     worksheet.Cells[1, 21].Value = "Отнач";
                     worksheet.Cells[1, 22].Value = "Откон";
-
+                    //worksheet.Cells[1, 23].Value = "Число отводов";
 
 
 
@@ -433,9 +436,120 @@ namespace HeatingPipeV5
                         worksheet.Cells[row, 20].Value = r.Description;     // Описание (расширенное)
                         worksheet.Cells[row, 21].Value = r.Onach;          // Отнач
                         worksheet.Cells[row, 22].Value = r.Okonech;            // Откон
+                       /* foreach(var elbow in danfossElbows)
+                        {
+                            if(elbow.Mark.Equals(r.Comment))
+                            {
+                                var elbows = danfossElbows.GroupBy(x => x.Mark).Select(x => x).Max(x => x.Count());
+                                worksheet.Cells[row, 23].Value = elbow.Count;
+                            }
+                            break;
+                        }*/
 
-                        package.SaveAs(new FileInfo(filePath));
+
+
+                       
+
+
+
+
+                       
                     }
+
+                    var worksheet_eq = package.Workbook.Worksheets.Add("Оборудование");
+
+                    for (int c = 1; c <= 20; c++) worksheet.Column(c).Width = 15;
+                    worksheet_eq.Cells[1, 1].Value = "Id";
+                    worksheet_eq.Cells[1, 2].Value = "Система";
+                    worksheet_eq.Cells[1, 3].Value = "Тип";
+                    worksheet_eq.Cells[1, 4].Value = "Символ";
+                    worksheet_eq.Cells[1, 5].Value = "n/L";
+                    worksheet_eq.Cells[1, 6].Value = "Фрг";
+                    worksheet_eq.Cells[1, 7].Value = "Разм";
+                    worksheet_eq.Cells[1, 8].Value = "Укр";
+                    worksheet_eq.Cells[1, 9].Value = "Lмакс";
+                    worksheet_eq.Cells[1, 10].Value = "a";
+                    worksheet_eq.Cells[1, 11].Value = "Подключение";
+                    worksheet_eq.Cells[1, 12].Value = "Уровень";
+                    worksheet_eq.Cells[1, 13].Value = "Помещение";
+                    worksheet_eq.Cells[1, 14].Value = "Подключение";
+                    worksheet_eq.Cells[1, 15].Value = "dT";
+                    worksheet_eq.Cells[1, 16].Value = "Axo";
+                    worksheet_eq.Cells[1, 17].Value = "Coc";
+                    worksheet_eq.Cells[1, 18].Value = "Комментарии";
+                    worksheet_eq.Cells[1, 19].Value = "Производитель";
+                    worksheet_eq.Cells[1, 20].Value = "Описание";
+
+                    for (int i =0; i<danfossEquipment.Count;i++)
+                    {
+                        var r = danfossEquipment[i];
+                        int row = i + 2;
+
+                        worksheet_eq.Cells[row, 1].Value = r.Id;
+                        worksheet_eq.Cells[row, 2].Value = r.System;
+                        worksheet_eq.Cells[row, 3].Value = r.Type;
+                        worksheet_eq.Cells[row, 4].Value = r.Symbol;
+                        worksheet_eq.Cells[row, 5].Value = r.n_L;
+                        worksheet_eq.Cells[row, 6].Value = r.Frg;
+                        worksheet_eq.Cells[row, 7].Value = r.Size;
+                        worksheet_eq.Cells[row, 8].Value = r.Cover;
+                        worksheet_eq.Cells[row, 9].Value = r.LengthMax;
+                        worksheet_eq.Cells[row, 10].Value = r.Alpha;
+                        worksheet_eq.Cells[row, 11].Value = r.Connection;
+                        worksheet_eq.Cells[row, 12].Value = r.Lvl;
+                        worksheet_eq.Cells[row, 13].Value = r.Room;
+                        worksheet_eq.Cells[row, 14].Value = r.Connection2;
+                        worksheet_eq.Cells[row, 15].Value = r.dT;
+                        worksheet_eq.Cells[row, 16].Value = r.Axo;
+                        worksheet_eq.Cells[row, 17].Value = r.Status;
+                        worksheet_eq.Cells[row, 18].Value = r.Comment;
+                        worksheet_eq.Cells[row, 19].Value = r.Manufacturer;
+                        worksheet_eq.Cells[row, 20].Value = r.Description;
+                    }
+                    var worksheet_man = package.Workbook.Worksheets.Add("Коллекторы");
+
+                    for (int c = 1; c <= 15; c++) worksheet.Column(c).Width = 15;
+                    worksheet_man.Cells[1, 1].Value = "Id";
+                    worksheet_man.Cells[1, 2].Value = "Тип системы";
+                    worksheet_man.Cells[1, 3].Value = "Тип";
+                    worksheet_man.Cells[1, 4].Value = "Символ";
+                    worksheet_man.Cells[1, 5].Value = "DN";
+                    worksheet_man.Cells[1, 6].Value = "Tmix";
+                    worksheet_man.Cells[1, 7].Value = "dT";
+                    worksheet_man.Cells[1, 8].Value = "Количество контуров";
+                    worksheet_man.Cells[1, 9].Value = "Уровень";
+                    worksheet_man.Cells[1, 10].Value = "Уровень2";
+                    worksheet_man.Cells[1, 11].Value = "Ахо";
+                    worksheet_man.Cells[1, 12].Value = "Состояние";
+                    worksheet_man.Cells[1, 13].Value = "Комментарий";
+                    worksheet_man.Cells[1, 14].Value = "Производитель";
+                    worksheet_man.Cells[1, 15].Value = "Описание";
+
+                    for (int i=0;i<danfossManifolds.Count;i++)
+                    {
+                        var r = danfossManifolds[i];
+                        int row = i + 2;
+
+                        worksheet_man.Cells[row, 1].Value = r.Id;
+                        worksheet_man.Cells[row, 2].Value = r.System;
+                        worksheet_man.Cells[row, 3].Value = r.Type;
+                        worksheet_man.Cells[row, 4].Value = r.Symbol;
+                        worksheet_man.Cells[row, 5].Value = r.Dn;
+                        worksheet_man.Cells[row, 6].Value = r.Tmix;
+                        worksheet_man.Cells[row, 7].Value = r.dT;
+                        worksheet_man.Cells[row, 8].Value = r.Contours;
+                        worksheet_man.Cells[row, 9].Value = r.Lvl;
+                        worksheet_man.Cells[row, 10].Value = r.Lvl2;
+                        worksheet_man.Cells[row, 11].Value = r.Axo;
+                        worksheet_man.Cells[row, 12].Value = r.Condition;
+                        worksheet_man.Cells[row, 13].Value = r.Comment;
+                        worksheet_man.Cells[row, 14].Value = r.Manufacturer;
+                        worksheet_man.Cells[row, 15].Value = r.Description;
+                    }
+
+
+
+                    package.SaveAs(new FileInfo(filePath));
                 }
             }
             catch (Exception ex)

@@ -874,5 +874,64 @@ namespace HeatingPipeV5
 
             return result;
         }
+
+        public List<DanfossEquipment> GetDanfossEquipment()
+        {
+            var result = new List<DanfossEquipment>();
+
+            foreach (var branch in Collection)
+            {
+                
+                var equipments = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment);
+                foreach(var equipment in equipments)
+                {
+                    DanfossEquipment danfossEquipment = new DanfossEquipment(equipment);
+                    
+                    result.Add(danfossEquipment);
+                }
+            }
+            return result;
+        }
+        public List<DanfossManifold> GetDanfossManifolds ()
+        {
+            var result = new List<DanfossManifold>();
+            foreach (var branch in Collection)
+            {
+                var manifolds = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Manifold);
+                foreach (var manifold in manifolds)
+                {
+                    DanfossManifold danfossManifold = new DanfossManifold(manifold);
+                    result.Add(danfossManifold);
+                }
+            }
+            return result;
+        }
+        internal List<DanfossElbow> GetDanfossElbows()
+        {
+            var result = new List<DanfossElbow>();
+
+            foreach (var branch in Collection)
+            {
+                // Берём только трубы в этой ветке
+                var pipes = branch.Elements
+                                  .Where(x => x.DetailType == CustomElement.Detail.Elbow);
+
+                // Группируем по TrackNumber и для каждой группы создаём DanfossPipe
+                var trackedPipes = pipes.GroupBy(x => x.TrackNumber);
+
+                foreach (var group in trackedPipes)
+                {
+                    var list = group.ToList();
+                    if (list.Count == 0)
+                        continue;
+                    
+                    // Конструктор DanfossPipe ожидает IEnumerable<CustomElement> или List<CustomElement>
+                    var danfossPipe = new DanfossElbow(list);
+                    result.Add(danfossPipe);
+                }
+            }
+
+            return result;
+        }
     }
 }
