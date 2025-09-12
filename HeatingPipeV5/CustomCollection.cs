@@ -689,7 +689,7 @@ namespace HeatingPipeV5
         public string GetContent()
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("Id;Level Архитектурный;DetalType;BranchNumber;ManifoldNumber;SectionNumber;Dв;Dн;Dном;Volume;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График"); ;
+            csvcontent.AppendLine("Id;Level Архитектурный;DetalType;BranchNumber;MiniLoopNumber;ManifoldNumber;SectionNumber;Dв;Dн;Dном;Volume;Length;Unit;ElementIds ;Code;Name;LevelAudithor;Space;Adsk_Теплопотери;График"); ;
 
            
 
@@ -698,7 +698,7 @@ namespace HeatingPipeV5
                 
                 foreach (var element in branch.Elements)
                 {
-                    string a = $"{element.ElementId};{element.Lvl};{element.DetailType};{element.BranchMark};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};{element.DiameterNominal};{element.VolumeDouble};" +
+                    string a = $"{element.ElementId};{element.Lvl};{element.DetailType};{element.BranchMark};{element.MiniLoopNumber};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};{element.DiameterNominal};{element.VolumeDouble};" +
                          $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchMark}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
                         
                     csvcontent.AppendLine(a);
@@ -933,5 +933,54 @@ namespace HeatingPipeV5
 
             return result;
         }
+
+        public  void OrderTracks()
+        {
+            Collection = Collection
+            .OrderBy(b => b.Elements
+            .Where(e => e.DetailType == CustomElement.Detail.Pipe || e.DetailType==CustomElement.Detail.FlexPipe)
+            .Sum(e => e.Lenght))
+            .ToList();
+        }
+
+        internal void RemoveDuplicates()
+        {
+            List<CustomBranch> customCollection = new List<CustomBranch>();
+            List<ElementId> uniqueIds = new List<ElementId>();
+            foreach (var branch in Collection)
+            {
+                CustomBranch branch1 = new CustomBranch(Document);
+                foreach (var element in branch.Elements)
+                {
+                    if(!uniqueIds.Contains(element.ElementId))
+                    {
+                        uniqueIds.Add(element.ElementId);
+                        branch1.Add(element);
+                    }
+                }
+                customCollection.Add(branch1);
+            }
+            Collection = customCollection;
+        }
+
+        public Dictionary<CustomElement, CustomBranch> GetAllManifolds()
+        {
+
+            Dictionary<CustomElement, CustomBranch> manifolds = new Dictionary<CustomElement, CustomBranch>();
+            foreach (var branch in Collection)
+            {
+
+                foreach (var element in branch.Elements)
+                {
+                    if (element.DetailType == CustomElement.Detail.Manifold)
+                    {
+                        manifolds.Add(element, branch);
+                    }
+                }
+            }
+            return manifolds;
+        }
+        
+
     }
 }

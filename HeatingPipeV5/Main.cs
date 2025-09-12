@@ -207,23 +207,35 @@ namespace HeatingPipeV5
                             var collection = GetCollection(doc, mep_equipment);
 
                             collection.Calcualate(mainViewModel.Density);
-                            collection.GetLength();
-                            collection.OrderByLength(doc);
                             collection.MarkPipes();
+                            //collection.GetLength();
+                            //collection.OrderByLength(doc);
+
+
+
                             //collection.MarkBranches();
                             /*collection.ResCalculate();
 
                             var selectedBranch = collection.SelectMainBranch();
 
                             collection.MarkCollection(selectedBranch);*/
-                            //var content = collection.GetContent();
+                           
+
+                            //collection.OrderTracksByManifold();
+
+
+
+
+                            //collection.OrderTracks();
+                            //collection.RemoveDuplicates();
                             List<DanfossPipe> danfossElements = collection.GetDanfossElements();
                             List<DanfossEquipment> danfossEquipment = collection.GetDanfossEquipment();
                             //List<DanfossElbow> danfossElbows = collection.GetDanfossElbows();
                             List<DanfossManifold> danfossManifolds = collection.GetDanfossManifolds();
 
-                            SaveFile(doc, danfossElements,danfossEquipment, danfossManifolds);
-                            //collection.SaveFile(content);
+                            //SaveFile(doc, danfossElements,danfossEquipment, danfossManifolds);
+                            var content = collection.GetContent();
+                            collection.SaveFile(content);
                         }
                         
                         

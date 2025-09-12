@@ -15,6 +15,8 @@ namespace HeatingPipeV5
         public Autodesk.Revit.DB.Document Document { get; set; }
         private static int _counter = 0;
         public int Number { get; set; }
+        public int MiniLoopNumber { get; set; }
+        int LoopNumber { get; set; }
         public int GroupNumber { get; set; }
         public double Pressure { get; set; }
         public double Length { get; set; }
@@ -94,16 +96,16 @@ namespace HeatingPipeV5
         {
 
             
-                Number = _counter;
-           
-            ElementId nextElement = null;
+             Number = _counter;
+             MiniLoopNumber = _counter;
+             ElementId nextElement = null;
 
             CustomElement customElement = new CustomElement(document, airterminal);
             customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
             BranchNumber = customElement.MepSpace;
             customElement.Direction = "П";
             customElement.BranchMark = BranchNumber +"_"+ customElement.Direction + "_" + Number.ToString();
-
+            customElement.MiniLoopNumber = MiniLoopNumber;
 
 
 
@@ -116,7 +118,7 @@ namespace HeatingPipeV5
             BranchNumber = customElementSup.MepSpace;
             customElementSup.Direction = "П";
             customElementSup.BranchMark = BranchNumber +"_"+ customElementSup.Direction + "_" + Number.ToString();
-
+            customElementSup.MiniLoopNumber = MiniLoopNumber;
             do
             {
                 
@@ -130,6 +132,7 @@ namespace HeatingPipeV5
                 customElementSup.IsSupply = true;
                 customElementSup.Direction = "П";
                 customElementSup.BranchMark = BranchNumber+"_" +customElementSup.Direction+"_"+Number.ToString();
+                customElementSup.MiniLoopNumber = MiniLoopNumber;
             }
             while (nextElement != null);
 
@@ -145,6 +148,7 @@ namespace HeatingPipeV5
             BranchNumber = customElementSup.MepSpace;
             customElementRet.Direction = "О";
             customElementRet.BranchMark = customElement.MepSpace +"_"+ customElementRet.Direction + "_" + Number.ToString();
+            customElementRet.MiniLoopNumber = MiniLoopNumber;
             do
             {
                 if (customElementRet.ElementId.IntegerValue == 4080864)
@@ -165,6 +169,7 @@ namespace HeatingPipeV5
                 customElementRet.IsSupply = false;
                 customElementRet.Direction = "О";
                 customElementRet.BranchMark = customElement.MepSpace + "_" + customElementRet.Direction + "_" + Number.ToString();
+                customElementRet.MiniLoopNumber = MiniLoopNumber;
             }
             while (nextElement != null);
             BranchNumber = Number. ToString();

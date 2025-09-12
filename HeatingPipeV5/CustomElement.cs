@@ -62,6 +62,7 @@ namespace HeatingPipeV5
         public string HeatLoss { get; set; }
         public string AuditorLevel { get; set; }
         public bool IsSupply { get; set; }
+        public int MiniLoopNumber { get; set; }
 
         public string Direction { get; set; }
         public enum Detail
