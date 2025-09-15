@@ -203,6 +203,7 @@ namespace HeatingPipeV5
 
                         foreach (var systemName in systemNames)
                         {
+                           
                             var mep_equipment = GetMechanicalEquipment(doc, systemName);
                             var collection = GetCollection(doc, mep_equipment);
 

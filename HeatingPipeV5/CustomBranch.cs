@@ -5,8 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Windows.Forms;
 using System.Xml.Linq;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 
 namespace HeatingPipeV5
 {
@@ -94,8 +96,11 @@ namespace HeatingPipeV5
                 }
             }
         }
-        public void CreateNewSupplyBranch(Document document, ElementId airterminal)
+        public void CreateNewSupplyBranch(Document document, ElementId airterminal )
         {
+
+            
+
             Number = _counter;
             MiniLoopNumber = _counter;
             Direction= "П";
@@ -113,8 +118,17 @@ namespace HeatingPipeV5
             
 
             CustomElement customElementSup = new CustomElement(document, nextsupplyelement);
-            customElementSup.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
-            BranchNumber = customElementSup.MepSpace;
+            try
+            {
+                customElementSup.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
+                BranchNumber = customElementSup.MepSpace;
+            }
+             catch (Exception ex)
+            {
+                string message = $"{airterminal} не имеет привязки к пространству. Проверьте наличие расчетной точки прибора";
+                TaskDialog.Show("Нет привязки к пространстру", message);
+            }
+           
             customElementSup.Direction = "П";
             customElementSup.BranchMark = BranchNumber + "_" + customElementSup.Direction + "_" + Number.ToString();
             customElementSup.MiniLoopNumber = MiniLoopNumber;
