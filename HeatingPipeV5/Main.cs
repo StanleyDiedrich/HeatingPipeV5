@@ -208,34 +208,29 @@ namespace HeatingPipeV5
 
                             collection.Calcualate(mainViewModel.Density);
                             collection.MarkPipes();
+                            collection.Shift();
+                            //var loops = collection.GetNewLoopBeforeManifold();
                             //collection.GetLength();
                             //collection.OrderByLength(doc);
-
-
-
                             //collection.MarkBranches();
                             /*collection.ResCalculate();
-
                             var selectedBranch = collection.SelectMainBranch();
-
                             collection.MarkCollection(selectedBranch);*/
-                           
-
                             //collection.OrderTracksByManifold();
-
-
-
-
                             //collection.OrderTracks();
                             //collection.RemoveDuplicates();
+
+                            // это надо
                             List<DanfossPipe> danfossElements = collection.GetDanfossElements();
                             List<DanfossEquipment> danfossEquipment = collection.GetDanfossEquipment();
-                            //List<DanfossElbow> danfossElbows = collection.GetDanfossElbows();
                             List<DanfossManifold> danfossManifolds = collection.GetDanfossManifolds();
+                            //это надо
 
-                            //SaveFile(doc, danfossElements,danfossEquipment, danfossManifolds);
-                            var content = collection.GetContent();
-                            collection.SaveFile(content);
+
+
+                            SaveFile(doc, danfossElements,danfossEquipment, danfossManifolds);
+                            //var content = collection.GetContent();
+                            //collection.SaveFile(content);
                         }
                         
                         
@@ -577,6 +572,7 @@ namespace HeatingPipeV5
             foreach (var terminal in selectedterminals)
             {
                 collection.CreateBranch(doc, terminal);
+              
             }
 
             return collection;

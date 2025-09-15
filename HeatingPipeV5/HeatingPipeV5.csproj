@@ -91,6 +91,7 @@
     <Compile Include="DanfossElement.cs" />
     <Compile Include="DanfossEquipment.cs" />
     <Compile Include="DanfossManifold.cs" />
+    <Compile Include="StringHelpers.cs" />
     <Compile Include="ValtecPexACatalog.cs" />
     <Compile Include="CustomBranch.cs" />
     <Compile Include="CustomCollection.cs" />

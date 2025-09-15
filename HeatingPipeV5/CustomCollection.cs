@@ -37,7 +37,9 @@ namespace HeatingPipeV5
             CustomBranch customBranch = new CustomBranch(Document, airterminal);
             try
             {
-                customBranch.CreateNewBranch(Document, airterminal);
+                //customBranch.CreateNewBranch(Document, airterminal);
+                customBranch.CreateNewSupplyBranch(Document, airterminal);
+                customBranch.CreateNewReturnBranch(Document, airterminal);
                 CustomElement customElement = new CustomElement(Document, airterminal);
                 Collection.Add(customBranch);
             }
@@ -85,6 +87,11 @@ namespace HeatingPipeV5
             return elements;
         }
 
+        public void DeleteAll ()
+        {
+            Collection = new List<CustomBranch>();
+            
+        }
 
         public void Calcualate(double density)
         {
@@ -709,32 +716,62 @@ namespace HeatingPipeV5
             return csvcontent.ToString();
         }
 
-
-
-
-
-
-
-
-
-       /* public string GetContent()
+        public string GetContent(List<CustomLoop> loops)
         {
             var csvcontent = new StringBuilder();
-            csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;LevelNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;RelPress;KMS;PDyn;Ltot;Ptot;Code;MainTrack");
+            csvcontent.AppendLine("Id;LoopNumber;DetalType;BranchNumber;MiniLoopNumber;ManifoldNumber;SectionNumber;Space;Adsk_Теплопотери;График"); ;
 
-            foreach (var branch in Collection)
+            foreach(var loop in loops)
             {
-                foreach (var element in branch.Elements)
+                foreach (var element in loop.SupplyBranch.Elements)
                 {
-                    string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.ShortSystemName};{element.Lvl};{element.LevelNumber};{element.BranchNumber};{element.TrackNumber};" +
-                         $"{element.Volume};{element.ModelLength};{element.ModelDiameter};{element.ModelVelocity};{element.PStat};{element.RelPres};{element.LocRes};{element.PDyn};{element.Ltot};{element.Ptot};" +
-                         $"{element.ShortSystemName}-{element.Lvl}-{element.BranchNumber}-{element.LevelNumber}-{element.TrackNumber};{element.MainTrack}";
+                    string a = $"{element.ElementId};{loop.LoopNumber};{element.DetailType};{element.BranchMark};{element.MiniLoopNumber};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};{element.DiameterNominal};{element.VolumeDouble};" +
+                        $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchMark}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
+
+                    csvcontent.AppendLine(a);
+                }
+               
+            }
+            foreach (var loop in loops)
+            {
+                foreach (var element in loop.ReturnBranch.Elements)
+                {
+                    string a = $"{element.ElementId};{loop.LoopNumber};{element.DetailType};{element.BranchMark};{element.MiniLoopNumber};{element.LevelNumber};{element.TrackNumber};{element.DiameterInner};{element.DiameterOuter};{element.DiameterNominal};{element.VolumeDouble};" +
+                        $"{element.ModelLength};{element.Unit};{element.ElementId};{element.ShortSystemName}-{element.Lvl}-{element.BranchMark}-{element.LevelNumber}-{element.TrackNumber};{element.ElementName};{element.AuditorLevel};{element.RoomName};{element.HeatLoss};{element.TempRegime};";
+
                     csvcontent.AppendLine(a);
                 }
             }
 
+            
+
             return csvcontent.ToString();
-        }*/
+        }
+
+
+
+
+
+
+
+        /* public string GetContent()
+         {
+             var csvcontent = new StringBuilder();
+             csvcontent.AppendLine("ElementId;DetailType;Name;SystemName;Level;LevelNumber;BranchNumber;SectionNumber;Volume;Length;Diameter;Velocity;PStat;RelPress;KMS;PDyn;Ltot;Ptot;Code;MainTrack");
+
+             foreach (var branch in Collection)
+             {
+                 foreach (var element in branch.Elements)
+                 {
+                     string a = $"{element.ElementId};{element.DetailType};{element.ElementName};{element.ShortSystemName};{element.Lvl};{element.LevelNumber};{element.BranchNumber};{element.TrackNumber};" +
+                          $"{element.Volume};{element.ModelLength};{element.ModelDiameter};{element.ModelVelocity};{element.PStat};{element.RelPres};{element.LocRes};{element.PDyn};{element.Ltot};{element.Ptot};" +
+                          $"{element.ShortSystemName}-{element.Lvl}-{element.BranchNumber}-{element.LevelNumber}-{element.TrackNumber};{element.MainTrack}";
+                     csvcontent.AppendLine(a);
+                 }
+             }
+
+             return csvcontent.ToString();
+         }*/
         public void SaveFile(string content) // спрятали функцию сохранения 
         {
             System.Windows.Forms.SaveFileDialog saveFileDialog = new System.Windows.Forms.SaveFileDialog();
@@ -980,7 +1017,147 @@ namespace HeatingPipeV5
             }
             return manifolds;
         }
-        
+        public List<CustomLoop> GetNewLoopBeforeManifold()
+        {
+            List<CustomLoop> loops = new List<CustomLoop>();
+            int loopNumber = 0;
+            foreach (var branch in Collection)
+            {
+                CustomLoop loop = new CustomLoop(Document);
+                string systemname = branch.Elements[0].Element.get_Parameter(Autodesk.Revit.DB.BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
+                
+                foreach (var element in branch.Elements)
+                {
+                    if (StringHelpers.ContainsElement(systemname,element.SystemName))
 
+                        {
+                            if (element.SystemType == Autodesk.Revit.DB.Plumbing.PipeSystemType.SupplyHydronic)
+                            {
+                                loop.SupplyBranch.Elements.Add(element);
+
+                            }
+                            if (element.SystemType == Autodesk.Revit.DB.Plumbing.PipeSystemType.ReturnHydronic)
+                            {
+                                loop.ReturnBranch.Elements.Add(element);
+                            }
+
+                        }
+                        /*if (element.DetailType == CustomElement.Detail.Manifold)
+                        {
+                            break;
+                        }*/
+                  
+
+
+                }
+                loop.LoopNumber = loopNumber;
+                loops.Add(loop);
+                loopNumber++;
+            }
+            return loops;
+
+        }
+
+        public void AddBranches(List<CustomBranch> branches)
+        {
+            foreach (var branch in branches)
+            {
+                Collection.Add(branch);
+            }
+           
+        }
+        internal void Shift()
+        {
+            List<CustomBranch> sortedCollection = new List<CustomBranch>();
+            var returnbranches = GetReturnBranches();
+            var supplybranches = GetSupplyBranches();
+            //var sortedCollection2  = Collection.GroupBy(x => x.BranchMark);
+
+            supplybranches = CustomBranch.UpDown(supplybranches);
+
+            sortedCollection.AddRange(supplybranches);
+            sortedCollection.AddRange(returnbranches);
+           /* AddBranches(supplybranches);
+            AddBranches(returnbranches);*/
+
+
+            List<CustomBranch> newCollection = new List<CustomBranch>();
+            List<ElementId> unique = new List<ElementId>();
+            foreach(var branch in sortedCollection)
+            {
+                CustomBranch customBranch = new CustomBranch(Document);
+                foreach (var element in branch.Elements)
+                {
+                    if(!unique.Contains(element.ElementId))
+                    {
+                        
+                            unique.Add(element.ElementId);
+                            customBranch.Elements.Add(element);
+                        if (element.Direction.Equals("О"))
+                        {
+                            var el = element;
+                        }
+                        if (element.Direction.Equals("П"))
+                        {
+                           /* if (element.DetailType == CustomElement.Detail.Tee)
+                            {
+                                break;
+                            }*/
+                        }
+
+
+                    }
+                }
+                newCollection.Add(customBranch);
+            }
+            Collection = newCollection;
+        }
+
+
+        //returnbranches = CustomBranch.UpDown(returnbranches);
+
+        //DeleteAll();
+
+        /*sortedCollection.AddRange(supplybranches);
+        sortedCollection.AddRange(returnbranches);*/
+        /* AddBranches(supplybranches);
+         AddBranches(returnbranches);*/
+        private List<CustomBranch> GetSupplyBranches()
+        {
+            List<CustomBranch> customBranches = new List<CustomBranch>();
+
+            foreach (var branch in Collection)
+            {
+                CustomBranch customBranch = new CustomBranch(Document);
+                foreach (var element in branch.Elements)
+                {
+                    if (element.BranchMark.Contains("П"))
+                    {
+                        customBranch.Elements.Add(element);
+                    }    
+                }
+                customBranches.Add(customBranch);
+            }
+            return customBranches;
+        }
+
+        private IEnumerable<CustomBranch> GetReturnBranches()
+        {
+            List<CustomBranch> customBranches = new List<CustomBranch>();
+
+            foreach (var branch in Collection)
+            {
+                CustomBranch customBranch = new CustomBranch(Document);
+                foreach (var element in branch.Elements)
+                {
+                    if (element.BranchMark.Contains("О"))
+                    {
+                        customBranch.Elements.Add(element);
+                    }
+                }
+                customBranches.Add(customBranch);
+            }
+            return customBranches;
+        }
     }
 }
