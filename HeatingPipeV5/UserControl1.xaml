@@ -10,6 +10,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Левая колонка: системы отопления -->
@@ -36,9 +37,11 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
+            <!--
             <Button Content="Начать" Command="{Binding StartCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
-           
+            
             <Button Content="Выбрать отдельные ветви" Command="{Binding StartPartial}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
+            -->
 
             <Button Content="Нумерация отопления для данфосса" Command="{Binding NumberMepEquipmentCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
 
@@ -72,6 +75,35 @@
 
             <Button Content="Перенести пространства" Command="{Binding CollectMepRoomsCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
             <Button Content="Скорректировать имя системы трубопроводов" Command="{Binding ChangePipeSystemCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"></Button>
+        </StackPanel>
+
+
+        <StackPanel Grid.Column="2" Margin="20">
+            <TextBlock Text="Выберите рабочий набор для копирования" FontWeight="Bold" FontSize="16" Margin="0,0,0,10" TextAlignment="Center"/>
+
+            <TextBox x:Name="SearchWorksheetTextBox" Width="400" Margin="5" Text="{Binding SearchWorksheet, UpdateSourceTrigger=PropertyChanged}" />
+
+            <ListBox x:Name="WorksheetListBox"
+             Width="400"
+             Height="200"
+             ItemsSource="{Binding FilteredWorksheetsList}"
+             SelectionMode="Extended"
+             Background="#D9D9D9"
+             BorderBrush="#B0B0B0"
+             BorderThickness="1">   
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+
+                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding WorksheetName}" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Button Content="Копировать пространства" Command="{Binding CopyMepSpaceCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
+            
         </StackPanel>
     </Grid>
 

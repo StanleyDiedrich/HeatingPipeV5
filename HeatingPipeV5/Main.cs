@@ -89,6 +89,7 @@ namespace HeatingPipeV5
 
             }
             ObservableCollection<ModelsName> modelsNames = new ObservableCollection<ModelsName>();
+            ObservableCollection<Worksheet> worksheets = new ObservableCollection<Worksheet>();
             foreach (var modName in modelNames)
             {
                 ModelsName model = new ModelsName(modName);
@@ -112,7 +113,7 @@ namespace HeatingPipeV5
 
 
             UserControl1 window = new UserControl1();
-            MainViewModel mainViewModel = new MainViewModel(doc, window, sysNums, modelsNames);
+            MainViewModel mainViewModel = new MainViewModel(doc, window, sysNums, modelsNames, worksheets);
             
             window.DataContext = mainViewModel;
             window.ShowDialog();
@@ -278,6 +279,11 @@ namespace HeatingPipeV5
                         }
 
                         break;
+                }
+                case Regime.COPY_LINKED_MEP_SPACE:
+                {
+
+                    break;
                 }
                 default:
                     // необязательная обработка по умолчанию

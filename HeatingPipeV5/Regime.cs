@@ -12,7 +12,8 @@ namespace HeatingPipeV5
         PARTIAL,
         MEP_ROOM_COLLECTION,
         MEP_HEATING_COLLECTION,
-        CHANGE_SYSTEM_NAME
+        CHANGE_SYSTEM_NAME,
+        COPY_LINKED_MEP_SPACE
 
     }
 }

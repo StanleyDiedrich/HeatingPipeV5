@@ -121,6 +121,7 @@
     <Compile Include="UserControl1.xaml.cs">
       <DependentUpon>UserControl1.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Worksheet.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="UserControl1.xaml">

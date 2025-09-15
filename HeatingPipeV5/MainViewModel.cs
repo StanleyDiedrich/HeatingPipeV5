@@ -109,6 +109,18 @@ namespace HeatingPipeV5
                 OnPropertyChanged(nameof(FilteredSystemNumbersList));
             }
         }
+
+        public string _searchWorksheet = "Выберите рабочий набор";
+        public string SearchWorksheet
+        {
+            get { return _searchWorksheet; }
+            set
+            {
+                _searchWorksheet = value;
+                OnPropertyChanged(nameof(SearchWorksheet));
+                OnPropertyChanged(nameof(FilteredWorksheetsList));
+            }
+        }
         private Regime _startFunction;
         public Regime StartFunction
         {
@@ -141,8 +153,32 @@ namespace HeatingPipeV5
                 OnPropertyChanged(nameof(FilteredLinkedModelsList));
             }
         }
+        private ObservableCollection<Worksheet> _worksheetList;
+        public ObservableCollection<Worksheet> WorksheetList 
+        {
+            get => _worksheetList;
+            set
+            {
+                _worksheetList = value;
+                OnPropertyChanged(nameof(WorksheetList));
+                OnPropertyChanged(nameof(FilteredWorksheetsList));
+            }
+        }
+        public ObservableCollection<Worksheet> FilteredWorksheetsList
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(SearchWorksheet) || string.Equals(SearchWorksheet, "Выберите рабочий набор", StringComparison.Ordinal))
+                    return new ObservableCollection<Worksheet>(WorksheetList);
 
+                var query = WorksheetList
+                    .Where(w => !string.IsNullOrWhiteSpace(w.WorksheetName) &&
+                                w.WorksheetName.IndexOf(SearchWorksheet, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .ToList();
 
+                return new ObservableCollection<Worksheet>(query);
+            }
+        }
         public ObservableCollection<SystemNumber> FilteredSystemNumbersList
         {
             get
@@ -214,6 +250,7 @@ namespace HeatingPipeV5
 
         public ICommand NumberMepEquipmentCommand { get; }
         public ICommand ChangePipeSystemCommand { get; }
+        public ICommand CopyMepSpaceCommand { get; }
         public void NumberMepEquipment(object param)
         {
             StartFunction = Regime.MEP_HEATING_COLLECTION;
@@ -245,7 +282,11 @@ namespace HeatingPipeV5
             StartFunction = Regime.CHANGE_SYSTEM_NAME;
             Window.Close();
         }
-
+        public void CopyMepSpace (object param)
+        {
+            StartFunction = Regime.COPY_LINKED_MEP_SPACE;
+            Window.Close();
+        }
         public ICommand StartPartial { get; }
         public void PartialCalc(object param)
         {
@@ -303,27 +344,31 @@ namespace HeatingPipeV5
 
 
 
-        public MainViewModel(Autodesk.Revit.DB.Document doc, UserControl1 window, ObservableCollection<SystemNumber> systemNumbers, ObservableCollection<ModelsName> modelsNames)
+        public MainViewModel(Autodesk.Revit.DB.Document doc, UserControl1 window, ObservableCollection<SystemNumber> systemNumbers, ObservableCollection<ModelsName> modelsNames, ObservableCollection<Worksheet> worksheets)
         {
             Window = window;
             Document = doc;
             SystemNumbersList = systemNumbers;
             ModelsList = modelsNames;
+            WorksheetList = worksheets;
             FilteredWorksetCollector collector = new FilteredWorksetCollector(doc);
             IList<Workset> worksets = collector.OfKind(WorksetKind.UserWorkset).ToWorksets();
             foreach (var workset in worksets)
             {
                 WorkSets.Add(workset);
             }
-
-
+            
+            foreach (var workSet in WorkSets)
+            {
+                WorksheetList.Add(new Worksheet(workSet.Name, workSet));
+            }
             ShowSelectedSystemsCommand = new RelayCommand(ShowSelectedSystems);
             StartCommand = new RelayCommand(StartCalculate);
             StartPartial = new RelayCommand(PartialCalc);
             CollectMepRoomsCommand = new RelayCommand(CollectMepRooms);
             NumberMepEquipmentCommand = new RelayCommand(NumberMepEquipment);
             ChangePipeSystemCommand = new RelayCommand(ChangePipeSystem);
-
+            CopyMepSpaceCommand = new RelayCommand(CopyMepSpace);
 
         }
 
