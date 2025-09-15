@@ -213,6 +213,7 @@ namespace HeatingPipeV5
         }
 
         public ICommand NumberMepEquipmentCommand { get; }
+        public ICommand ChangePipeSystemCommand { get; }
         public void NumberMepEquipment(object param)
         {
             StartFunction = Regime.MEP_HEATING_COLLECTION;
@@ -235,6 +236,13 @@ namespace HeatingPipeV5
             var selectedItems = SystemNumbersList.Where(x => x.IsSelected).Select(x => x.SystemName).ToList();
             SelectedSystems = string.Join(", ", selectedItems);
             StartFunction = Regime.TOTAL;
+            Window.Close();
+        }
+
+        public void ChangePipeSystem(object param)
+        {
+
+            StartFunction = Regime.CHANGE_SYSTEM_NAME;
             Window.Close();
         }
 
@@ -314,7 +322,9 @@ namespace HeatingPipeV5
             StartPartial = new RelayCommand(PartialCalc);
             CollectMepRoomsCommand = new RelayCommand(CollectMepRooms);
             NumberMepEquipmentCommand = new RelayCommand(NumberMepEquipment);
-          
+            ChangePipeSystemCommand = new RelayCommand(ChangePipeSystem);
+
+
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

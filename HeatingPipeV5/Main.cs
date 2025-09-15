@@ -236,6 +236,48 @@ namespace HeatingPipeV5
                         
                     break;
                 }
+                case Regime.CHANGE_SYSTEM_NAME:
+                {
+                        var systemNames = mainViewModel.SystemNumbersList
+                           .Where(x => x.IsSelected)
+                           .Select(x => x.SystemName);
+
+                        FilteredElementCollector filteredSystems = new FilteredElementCollector(doc);
+                        var fSystems = filteredSystems.OfCategory(BuiltInCategory.OST_PipingSystem).WhereElementIsNotElementType().ToList(); // отфильтрованные системы
+
+                       
+
+                        foreach (var  system in fSystems) //перебор по отфильтрованным системам 
+                        {
+                            foreach (var sysName in systemNames) // проход по выбранным системам 
+                            {
+                                var systemType = system.GetTypeId();
+                                if (doc.GetElement(systemType).get_Parameter(BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM).AsString().Equals(sysName))
+                                {
+                                    string systemName = doc.GetElement(systemType).get_Parameter(BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM).AsString();
+                                    var param = system.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
+                                    string abbreviation = param.Split()[0];
+                                    string name = param.Split()[1];
+                                    string newName = sysName + " " + name;
+
+                                    using (Transaction t = new Transaction(doc, "Переименование системы"))
+                                    {
+                                        t.Start();
+                                        try
+                                        {
+                                            system.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).Set(newName);
+                                            t.Commit();
+                                        }
+                                        catch
+                                        { }
+                                    }
+                                }
+                            }
+                           
+                        }
+
+                        break;
+                }
                 default:
                     // необязательная обработка по умолчанию
                     break;

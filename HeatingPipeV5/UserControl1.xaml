@@ -71,6 +71,7 @@
             </ListBox>
 
             <Button Content="Перенести пространства" Command="{Binding CollectMepRoomsCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
+            <Button Content="Скорректировать имя системы трубопроводов" Command="{Binding ChangePipeSystemCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"></Button>
         </StackPanel>
     </Grid>
 
