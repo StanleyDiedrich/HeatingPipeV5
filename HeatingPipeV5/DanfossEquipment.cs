@@ -1,4 +1,5 @@
 ﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,14 +58,48 @@ namespace HeatingPipeV5
             {
                 FamilyInstance instance = (element.Element as FamilyInstance);
                 FamilySymbol symbol = instance.Symbol;
-                n_L = symbol.LookupParameter("Длина прибора").AsValueString();
+                ParameterSet symbolParam = symbol.Parameters;
+                try
+                {
+                    foreach (Parameter paramName in symbolParam)
+                    {
+                        if (string.IsNullOrWhiteSpace(paramName.Definition.Name.ToString())) continue;
+
+                        switch (paramName.Definition.Name.ToString())
+                        {
+                            case "Длина прибора":
+                                var param = symbol.LookupParameter(paramName.Definition.Name.ToString());
+                                if (param != null && param.HasValue)
+                                {
+                                    var n_L = param.AsValueString(); // или AsDouble/AsInteger/AsString в зависимости от типа
+                                                                     // обработка n_L
+                                }
+                                break;
+
+                            case "L_Length":
+                                param = symbol.LookupParameter(paramName.Definition.Name.ToString());
+                                if (param != null && param.HasValue)
+                                {
+                                    var n_L = param.AsValueString(); // или AsDouble/AsInteger/AsString в зависимости от типа
+                                                                     // обработка n_L
+                                }
+                                break;
+
+                        }
+                        //n_L = symbol.LookupParameter("Длина прибора").AsValueString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TaskDialog.Show("Ошибка в определении длины", $"{element.ElementId} ");
+                }
                 
             }
 
 
 
 
-            n_L = element.Element.LookupParameter("L").AsValueString();
+            //n_L = element.Element.LookupParameter("L").AsValueString();
 
 
             dT = "20";

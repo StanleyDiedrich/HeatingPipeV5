@@ -126,7 +126,7 @@ namespace HeatingPipeV5
             {
                 case Regime.TOTAL:
                     {
-                        var systemNames = mainViewModel.SystemNumbersList
+                       /* var systemNames = mainViewModel.SystemNumbersList
                             .Where(x => x.IsSelected)
                             .Select(x => x.SystemName);
 
@@ -143,13 +143,13 @@ namespace HeatingPipeV5
                             collection.MarkCollection(selectedBranch);
                             var content = collection.PrepareContent();
                             collection.SaveFile(content);
-                        }
+                        }*/
                         break;
                     }
 
                 case Regime.PARTIAL:
                     {
-                        var startElements = GetSelectedStartElements(uIDocument);
+                        /*var startElements = GetSelectedStartElements(uIDocument);
                         if (startElements != null && startElements.Count > 0)
                         {
                             startElements = GetMechanicalEquipment(doc, startElements);
@@ -163,7 +163,7 @@ namespace HeatingPipeV5
                             collection.MarkCollection(selectedBranch);
                             var content = collection.PrepareContent();
                             collection.SaveFile(content);
-                        }
+                        }*/
                         break;
                     }
 
@@ -202,13 +202,23 @@ namespace HeatingPipeV5
                             .Select(x => x.SystemName);
 
                         var mep_rooms = GetMepRooms(doc);
-                        
-                        
+
+                        var workset = mainViewModel.WorksheetList.Where(x => x.IsSelected)
+                            .Select(x => x.WorksheetName)
+                            .FirstOrDefault(); ;
+                        if (workset==null)
+                        {
+                             workset = mainViewModel.WorksheetList
+                            .Select(x => x.WorksheetName)
+                            .FirstOrDefault(name => name == "(30)_Отопление");
+
+
+                        }
 
                         foreach (var systemName in systemNames)
                         {
                            
-                            var mep_equipment = GetMechanicalEquipment(doc, systemName);
+                            var mep_equipment = GetMechanicalEquipment(doc, systemName,workset);
                             var collection = GetCollection(doc, mep_equipment);
 
                             collection.Calcualate(mainViewModel.Density);
@@ -334,7 +344,8 @@ namespace HeatingPipeV5
                                 try
                                 {
                                     Space newSpace = createDoc.NewSpace(copiedSpace.Level, targetPhase, copiedSpace.Location);
-
+                                    newSpace.get_Parameter(BuiltInParameter.SPACE_ASSOC_ROOM_NAME).Set(copiedSpace.Number);
+                                    //newSpace.get_Parameter(BuiltInParameter.ROOM_NAME).Set(copiedSpace.Name);
                                     newSpace.LookupParameter("ADSK_Номер квартиры").Set(copiedSpace.Name);
                                     newSpace.LookupParameter("ADSK_Температура в помещении").Set(copiedSpace.Temperature);
                                     newSpace.get_Parameter(BuiltInParameter.ROOM_DESIGN_HEATING_LOAD_PARAM).Set(copiedSpace.HeatLoading);
@@ -704,7 +715,7 @@ namespace HeatingPipeV5
            
             return elementIds;
         }
-        private List<ElementId> GetMechanicalEquipment(Autodesk.Revit.DB.Document doc, string systemName)
+        private List<ElementId> GetMechanicalEquipment(Autodesk.Revit.DB.Document doc, string systemName, string workSetName)
         {
             List<ElementId> resultterminals = new List<ElementId>();
             var terminals = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_MechanicalEquipment).WhereElementIsNotElementType().ToElementIds().ToList();
@@ -719,15 +730,33 @@ namespace HeatingPipeV5
                     FamilyInstance fI = doc.GetElement(terminal) as FamilyInstance;
                     if (fI != null)
                     {
-                        var checksystem = fI.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
-                        if (checksystem == null)
+                        if (fI.MEPModel.ConnectorManager==null)
                         {
                             continue;
                         }
-                        else if (checksystem.Contains(systemName))
+                        if(fI.get_Parameter(BuiltInParameter.ELEM_PARTITION_PARAM).AsValueString().Equals(workSetName))
                         {
-                            resultterminals.Add(terminal);
+                            try
+                            {
+                                var checksystem = fI.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM).AsString();
+
+                                string abbreviation = checksystem.Split()[0];
+                                if (checksystem == null)
+                                {
+                                    continue;
+                                }
+                                else if (checksystem.Contains(abbreviation))
+                                {
+                                    resultterminals.Add(terminal);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                TaskDialog.Show("Оборудование не имеет системы", $"{terminal}");
+                            }
                         }
+                        
+                        
                     }
                     else
                     {

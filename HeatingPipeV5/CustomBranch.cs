@@ -107,10 +107,13 @@ namespace HeatingPipeV5
             ElementId nextElement = null;
 
             CustomElement customElement = new CustomElement(document, airterminal);
-            customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
+            //customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
+            customElement.MepSpace = (document.GetElement(airterminal) as FamilyInstance).Space.LookupParameter("ADSK_Номер квартиры").AsValueString();
+            //
             BranchNumber = customElement.MepSpace;
             customElement.Direction = "П";
-            customElement.BranchMark = BranchNumber + "_" + customElement.Direction + "_" + Number.ToString();
+            //customElement.BranchMark = BranchNumber + "_" + customElement.Direction + "_" + Number.ToString();
+            customElement.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
             customElement.MiniLoopNumber = MiniLoopNumber;
 
             Elements.Add(customElement);
@@ -130,7 +133,7 @@ namespace HeatingPipeV5
             }
            
             customElementSup.Direction = "П";
-            customElementSup.BranchMark = BranchNumber + "_" + customElementSup.Direction + "_" + Number.ToString();
+            customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
             customElementSup.MiniLoopNumber = MiniLoopNumber;
             do
             {
@@ -144,7 +147,8 @@ namespace HeatingPipeV5
                 customElementSup = new CustomElement(document, nextElement);
                 customElementSup.IsSupply = true;
                 customElementSup.Direction = "П";
-                customElementSup.BranchMark = BranchNumber + "_" + customElementSup.Direction + "_" + Number.ToString();
+                //customElementSup.BranchMark = BranchNumber + "_" + customElementSup.Direction + "_" + Number.ToString();
+                customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
                 customElementSup.MiniLoopNumber = MiniLoopNumber;
             }
             while (nextElement != null);
@@ -172,10 +176,13 @@ namespace HeatingPipeV5
             ElementId nextElement = null;
 
             CustomElement customElement = new CustomElement(document, airterminal);
-            customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
+            //customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
+            customElement.MepSpace = (document.GetElement(airterminal) as FamilyInstance).Space.LookupParameter("ADSK_Номер квартиры").AsValueString();
             BranchNumber = customElement.MepSpace;
             customElement.Direction = "О";
-            customElement.BranchMark = BranchNumber + "_" + customElement.Direction + "_" + Number.ToString();
+           
+                customElement.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+            //customElement.BranchMark = BranchNumber + "_" + customElement.Direction + "_" + Number.ToString();
             customElement.MiniLoopNumber = MiniLoopNumber;
 
             Elements.Add(customElement);

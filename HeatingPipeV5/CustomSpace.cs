@@ -10,6 +10,8 @@ namespace HeatingPipeV5
         public Level Level { get; set; }
         public UV Location { get; set; }
         public string Name { get; set; }
+        public string Number { get; set; }
+        public string MepSpaceName { get; set; }
         public string HeatLoading { get; set; }
         public string Temperature { get; set; }
         public Solid CSolid { get; set; }
@@ -22,8 +24,8 @@ namespace HeatingPipeV5
             {
                 Element = element;
                 Level = doc.GetElement(element.LevelId) as Level;
-
-                Name = element.LookupParameter("ADSK_Номер квартиры").AsValueString();
+                Name = element.get_Parameter(BuiltInParameter.ROOM_NAME).AsValueString();
+                Number = element.LookupParameter("ADSK_Номер квартиры").AsValueString();
                 HeatLoading = element.get_Parameter(BuiltInParameter.ROOM_DESIGN_HEATING_LOAD_PARAM).AsValueString().Split()[0];
                 Temperature = element.LookupParameter("ADSK_Температура в помещении").AsValueString().Split()[0];
                 XYZ center = ((element.Location) as LocationPoint).Point;

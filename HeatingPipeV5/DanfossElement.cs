@@ -61,7 +61,7 @@ namespace HeatingPipeV5
             }
             DiameterNominal = list.First().DiameterNominal;
             double len = list.Sum(p => p.Lenght);
-            Length = len.ToString();
+            Length = Math.Round(len,2).ToString();
             Comment = $"{list.First().BranchMark}-{list.First().TrackNumber}";
         }
 
