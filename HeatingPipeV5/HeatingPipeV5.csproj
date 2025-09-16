@@ -87,6 +87,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomLoop.cs" />
+    <Compile Include="CustomSpace.cs" />
     <Compile Include="DanfossElbow.cs" />
     <Compile Include="DanfossElement.cs" />
     <Compile Include="DanfossEquipment.cs" />

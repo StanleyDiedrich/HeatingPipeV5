@@ -10,6 +10,7 @@ using System.Net.NetworkInformation;
 using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Forms;
@@ -36,9 +37,11 @@ namespace HeatingPipeV5
         {
             UIApplication uiapp = commandData.Application;
             UIDocument uIDocument = uiapp.ActiveUIDocument;
+           
             Autodesk.Revit.DB.Document doc = uIDocument.Document;
+            Autodesk.Revit.Creation.Document createDoc = doc.Create;
 
-            List<string> systemnumbers = new List<string>();
+           List<string> systemnumbers = new List<string>();
             List<string> modelNames = new List<string>();
 
             var linkInstances = new FilteredElementCollector(doc)
@@ -282,8 +285,71 @@ namespace HeatingPipeV5
                 }
                 case Regime.COPY_LINKED_MEP_SPACE:
                 {
+                        List<Element> mep_rooms = new List<Element>();
+                        var selectedModel = mainViewModel.ModelsList.Where(x => x.IsSelected).Select(x => x.ModelName).ToList();
+                        FilteredElementCollector filter = new FilteredElementCollector(doc);
+                        var linkedElement = filter.OfCategory(BuiltInCategory.OST_RvtLinks).WhereElementIsNotElementType().ToList();
 
-                    break;
+                        Workset selectedWorset = mainViewModel.WorksheetList.Where(x => x.IsSelected).Select(x => x.Workset).First();
+
+                        foreach (var model in selectedModel)
+                        {
+                            foreach (var linkmodel in linkedElement)
+                            {
+                                if (linkmodel.Name.Equals(model))
+                                {
+                                    FilteredElementCollector filter1 = new FilteredElementCollector(linkmodel.Document);
+                                    var activedocument = (doc.GetElement(linkmodel.Id) as RevitLinkInstance).GetLinkDocument();
+                                    FilteredElementCollector linkedFilter = new FilteredElementCollector(activedocument);
+                                    mep_rooms = linkedFilter.OfCategory(BuiltInCategory.OST_MEPSpaces).WhereElementIsNotElementType().ToList();
+
+                                }
+                            }
+                        }
+                        List<CustomSpace> copiedSpaces = new List<CustomSpace>();
+                        foreach (var mepRoom in mep_rooms)
+                        {
+                            if (mepRoom!=null)
+                            {
+                                CustomSpace customSpace = new CustomSpace(doc, mepRoom);
+                                if(customSpace.Location!=null || customSpace.Name!=null || customSpace.Temperature!=null ||customSpace.HeatLoading!=null ||customSpace.Level!=null  )
+                                {
+                                    copiedSpaces.Add(customSpace);
+                                }
+                               
+                            }
+                            
+                        }
+
+                        Phase targetPhase = new FilteredElementCollector(doc)
+                        .OfClass(typeof(Phase))
+                        .Cast<Phase>()
+                        .FirstOrDefault();
+                        foreach (var copiedSpace in copiedSpaces)
+                        {
+
+                            using (Transaction t = new Transaction(doc,"CreateSpace"))
+                            {
+                                t.Start();
+                                try
+                                {
+                                    Space newSpace = createDoc.NewSpace(copiedSpace.Level, targetPhase, copiedSpace.Location);
+
+                                    newSpace.LookupParameter("ADSK_Номер квартиры").Set(copiedSpace.Name);
+                                    newSpace.LookupParameter("ADSK_Температура в помещении").Set(copiedSpace.Temperature);
+                                    newSpace.get_Parameter(BuiltInParameter.ROOM_DESIGN_HEATING_LOAD_PARAM).Set(copiedSpace.HeatLoading);
+                                    t.Commit();
+                                }
+                                catch
+                                {
+                                    t.RollBack();
+                                }
+                            }
+                        }
+
+
+
+                        break;
                 }
                 default:
                     // необязательная обработка по умолчанию
