@@ -84,7 +84,15 @@ namespace HeatingPipeV5
                                                                      // обработка n_L
                                 }
                                 break;
-
+                            case "Длина вручную":
+                                 param = symbol.LookupParameter(paramName.Definition.Name.ToString());
+                                if (param != null && param.HasValue)
+                                {
+                                    var n_L = param.AsValueString(); // или AsDouble/AsInteger/AsString в зависимости от типа
+                                                                     // обработка n_L
+                                }
+                                break;
+                                break;
                         }
                         //n_L = symbol.LookupParameter("Длина прибора").AsValueString();
                     }

@@ -344,9 +344,9 @@ namespace HeatingPipeV5
                                 try
                                 {
                                     Space newSpace = createDoc.NewSpace(copiedSpace.Level, targetPhase, copiedSpace.Location);
-                                    newSpace.get_Parameter(BuiltInParameter.SPACE_ASSOC_ROOM_NAME).Set(copiedSpace.Number);
-                                    //newSpace.get_Parameter(BuiltInParameter.ROOM_NAME).Set(copiedSpace.Name);
-                                    newSpace.LookupParameter("ADSK_Номер квартиры").Set(copiedSpace.Name);
+                                    
+                                    newSpace.get_Parameter(BuiltInParameter.ROOM_NAME).Set(copiedSpace.Name);
+                                    newSpace.LookupParameter("ADSK_Номер квартиры").Set(copiedSpace.Number);
                                     newSpace.LookupParameter("ADSK_Температура в помещении").Set(copiedSpace.Temperature);
                                     newSpace.get_Parameter(BuiltInParameter.ROOM_DESIGN_HEATING_LOAD_PARAM).Set(copiedSpace.HeatLoading);
                                     t.Commit();

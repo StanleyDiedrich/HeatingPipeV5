@@ -29,6 +29,7 @@ namespace HeatingPipeV5
         public double RelPressure { get; set; }
         public double LTot { get; set; }
         public double PBTot { get; set; }
+        
         public List<CustomElement> Elements { get; set; } = new List<CustomElement>();
         public CustomBranch(Autodesk.Revit.DB.Document document, ElementId elementId)
         {
@@ -109,11 +110,19 @@ namespace HeatingPipeV5
             CustomElement customElement = new CustomElement(document, airterminal);
             //customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
             customElement.MepSpace = (document.GetElement(airterminal) as FamilyInstance).Space.LookupParameter("ADSK_Номер квартиры").AsValueString();
+            GroupNumber = Convert.ToInt32(document.GetElement(airterminal).LookupParameter("ADSK_Группирование").AsValueString());
             //
             BranchNumber = customElement.MepSpace;
             customElement.Direction = "П";
             //customElement.BranchMark = BranchNumber + "_" + customElement.Direction + "_" + Number.ToString();
-            customElement.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+            if (GroupNumber==0)
+            {
+                customElement.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+            }
+            else
+            {
+                customElement.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+            }
             customElement.MiniLoopNumber = MiniLoopNumber;
 
             Elements.Add(customElement);
@@ -133,7 +142,15 @@ namespace HeatingPipeV5
             }
            
             customElementSup.Direction = "П";
-            customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
+            //customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
+            if (GroupNumber == 0)
+            {
+                customElementSup.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+            }
+            else
+            {
+                customElementSup.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+            }
             customElementSup.MiniLoopNumber = MiniLoopNumber;
             do
             {
@@ -148,7 +165,15 @@ namespace HeatingPipeV5
                 customElementSup.IsSupply = true;
                 customElementSup.Direction = "П";
                 //customElementSup.BranchMark = BranchNumber + "_" + customElementSup.Direction + "_" + Number.ToString();
-                customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
+                //customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
+                if (GroupNumber == 0)
+                {
+                    customElementSup.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+                }
+                else
+                {
+                    customElementSup.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+                }
                 customElementSup.MiniLoopNumber = MiniLoopNumber;
             }
             while (nextElement != null);
@@ -178,6 +203,7 @@ namespace HeatingPipeV5
             CustomElement customElement = new CustomElement(document, airterminal);
             //customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
             customElement.MepSpace = (document.GetElement(airterminal) as FamilyInstance).Space.LookupParameter("ADSK_Номер квартиры").AsValueString();
+            GroupNumber = Convert.ToInt32(document.GetElement(airterminal).LookupParameter("ADSK_Группирование").AsValueString());
             BranchNumber = customElement.MepSpace;
             customElement.Direction = "О";
            
@@ -197,7 +223,15 @@ namespace HeatingPipeV5
             //customElementRet.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
             BranchNumber = customElement.MepSpace;
             customElementRet.Direction = "О";
-            customElementRet.BranchMark = customElement.MepSpace + "_" + customElementRet.Direction + "_" + Number.ToString();
+            //customElementRet.BranchMark = customElement.MepSpace + "_" + customElementRet.Direction + "_" + Number.ToString();
+            if (GroupNumber == 0)
+            {
+                customElementRet.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+            }
+            else
+            {
+                customElementRet.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+            }
             customElementRet.MiniLoopNumber = MiniLoopNumber;
             do
             {
@@ -218,7 +252,15 @@ namespace HeatingPipeV5
                 customElementRet = new CustomElement(document, nextElement);
                 customElementRet.IsSupply = false;
                 customElementRet.Direction = "О";
-                customElementRet.BranchMark = customElement.MepSpace + "_" + customElementRet.Direction + "_" + Number.ToString();
+                //customElementRet.BranchMark = customElement.MepSpace + "_" + customElementRet.Direction + "_" + Number.ToString();
+                if (GroupNumber == 0)
+                {
+                    customElementRet.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+                }
+                else
+                {
+                    customElementRet.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+                }
                 customElementRet.MiniLoopNumber = MiniLoopNumber;
             }
             while (nextElement != null);
