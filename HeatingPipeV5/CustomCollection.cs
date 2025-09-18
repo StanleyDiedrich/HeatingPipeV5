@@ -16,6 +16,7 @@ using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using System.Windows.Input;
 using System.Xml.Linq;
+using System.Windows;
 
 namespace HeatingPipeV5
 {
@@ -106,7 +107,7 @@ namespace HeatingPipeV5
                 {
                     foreach (var element in branch.Elements)
                     {
-                      if (element.ElementId.IntegerValue==4080858)
+                      if (element.ElementId.IntegerValue== 2373360)
                         {
                             var element3 = element;
                         }
@@ -139,7 +140,7 @@ namespace HeatingPipeV5
                             {
 
                             }
-                            try
+                           /* try
                             {
                                 element.TempIn = (element.Element as FamilyInstance).LookupParameter("ADSK_Температура подающей линии").AsValueString();
                                 element.TempOut = (element.Element as FamilyInstance).LookupParameter("ADSK_Температура обратной линии").AsValueString();
@@ -148,15 +149,15 @@ namespace HeatingPipeV5
                             catch
                             {
 
-                            }
-                            try
+                            }*/
+                           /* try
                             {
                                 element.HeatLoss = (element.Element as FamilyInstance).LookupParameter("ADSK_Теплопотери").AsValueString();
                             }
                             catch
                             {
 
-                            }
+                            }*/
                             branch.Pressure += 8000;
                             branch.Length += 0;
 
@@ -922,6 +923,10 @@ namespace HeatingPipeV5
                 var equipments = branch.Elements.Select(x => x).Where(x => x.DetailType == CustomElement.Detail.Equipment);
                 foreach(var equipment in equipments)
                 {
+                    if (equipment.ElementId.IntegerValue == 1761275)
+                    {
+                        var element3 = equipment;
+                    }
                     DanfossEquipment danfossEquipment = new DanfossEquipment(equipment);
                     
                     result.Add(danfossEquipment);

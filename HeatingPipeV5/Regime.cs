@@ -13,7 +13,8 @@ namespace HeatingPipeV5
         MEP_ROOM_COLLECTION,
         MEP_HEATING_COLLECTION,
         CHANGE_SYSTEM_NAME,
-        COPY_LINKED_MEP_SPACE
+        COPY_LINKED_MEP_SPACE,
+        COPY_LINKED_ROOM
 
     }
 }

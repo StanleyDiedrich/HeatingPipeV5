@@ -1,11 +1,13 @@
 ﻿using Autodesk.Revit.DB;
-using Autodesk.Revit.DB.Mechanical;
+using System;
 using System.Collections.Generic;
-using System.Windows.Controls;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace HeatingPipeV5
 {
-    public class CustomSpace
+   public class CustomRoom
     {
         public Element Element { get; set; }
         public Level Level { get; set; }
@@ -19,9 +21,9 @@ namespace HeatingPipeV5
         public List<CurveArray> BoundarySegments { get; set; } = new List<CurveArray>();
 
 
-        public CustomSpace(Autodesk.Revit.DB.Document doc, Element element)
+        public CustomRoom(Autodesk.Revit.DB.Document doc, Element element)
         {
-            
+
             try
             {
                 Element = element;
@@ -33,18 +35,18 @@ namespace HeatingPipeV5
                 XYZ center = ((element.Location) as LocationPoint).Point;
                 Location = new UV(center.X, center.Y);
                 SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions();
-                var segments =(element as SpatialElement).GetBoundarySegments(opt);
+                var segments = (element as SpatialElement).GetBoundarySegments(opt);
                 foreach (var segment in segments)
                 {
                     CurveArray curveArray = new CurveArray();
                     foreach (BoundarySegment seg in segment)
                     {
                         Curve c = seg.GetCurve();
-                        if (c!=null)
+                        if (c != null)
                         {
                             curveArray.Append(c);
                         }
-                        
+
                     }
                     BoundarySegments.Add(curveArray);
                 }
@@ -53,11 +55,11 @@ namespace HeatingPipeV5
             {
 
             }
-            
-            
-           
 
-            
+
+
+
+
         }
     }
 }

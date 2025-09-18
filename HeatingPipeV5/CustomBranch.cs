@@ -99,7 +99,10 @@ namespace HeatingPipeV5
         }
         public void CreateNewSupplyBranch(Document document, ElementId airterminal )
         {
-
+            if (airterminal.IntegerValue== 2373360)
+            {
+                var airterm = airterminal;
+            }
             
 
             Number = _counter;
@@ -109,8 +112,29 @@ namespace HeatingPipeV5
 
             CustomElement customElement = new CustomElement(document, airterminal);
             //customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
-            customElement.MepSpace = (document.GetElement(airterminal) as FamilyInstance).Space.LookupParameter("ADSK_Номер квартиры").AsValueString();
-            GroupNumber = Convert.ToInt32(document.GetElement(airterminal).LookupParameter("ADSK_Группирование").AsValueString());
+            try
+            {
+                customElement.MepSpace = (document.GetElement(airterminal) as FamilyInstance).Space.LookupParameter("ADSK_Номер квартиры").AsValueString();
+            }
+            catch
+            {
+                customElement.MepSpace = document.GetElement(airterminal).LookupParameter("ADSK_Позиция").AsValueString();
+            }
+            var groupNumber = document.GetElement(airterminal)
+                          .LookupParameter("ADSK_Группирование")
+                          .AsValueString();
+
+           
+            if (!string.IsNullOrEmpty(groupNumber))
+            {
+                // GroupNumber уже содержит корректное значение
+            }
+            else
+            {
+                // Обработка случая отсутствия или некорректного значения
+                GroupNumber = 0; // или другое значение по умолчанию / логика обработки
+            }
+
             //
             BranchNumber = customElement.MepSpace;
             customElement.Direction = "П";
@@ -133,14 +157,16 @@ namespace HeatingPipeV5
             try
             {
                 customElementSup.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
-                BranchNumber = customElementSup.MepSpace;
+                
             }
              catch (Exception ex)
             {
-                string message = $"{airterminal} не имеет привязки к пространству. Проверьте наличие расчетной точки прибора";
-                TaskDialog.Show("Нет привязки к пространстру", message);
+                customElementSup.MepSpace = document.GetElement(airterminal).LookupParameter("ADSK_Позиция").AsValueString();
+                /*string message = $"{airterminal} не имеет привязки к пространству. Проверьте наличие расчетной точки прибора";
+                TaskDialog.Show("Нет привязки к пространстру", message);*/
             }
-           
+            BranchNumber = customElementSup.MepSpace;
+
             customElementSup.Direction = "П";
             //customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
             if (GroupNumber == 0)
@@ -202,8 +228,29 @@ namespace HeatingPipeV5
 
             CustomElement customElement = new CustomElement(document, airterminal);
             //customElement.MepSpace = ((document.GetElement(airterminal) as FamilyInstance).Space as SpatialElement).Number;
-            customElement.MepSpace = (document.GetElement(airterminal) as FamilyInstance).Space.LookupParameter("ADSK_Номер квартиры").AsValueString();
-            GroupNumber = Convert.ToInt32(document.GetElement(airterminal).LookupParameter("ADSK_Группирование").AsValueString());
+            try
+            {
+                customElement.MepSpace = (document.GetElement(airterminal) as FamilyInstance).Space.LookupParameter("ADSK_Номер квартиры").AsValueString();
+            }
+            catch
+            {
+                customElement.MepSpace = document.GetElement(airterminal).LookupParameter("ADSK_Позиция").AsValueString();
+            }
+            //GroupNumber = Convert.ToInt32(document.GetElement(airterminal).LookupParameter("ADSK_Группирование").AsValueString());
+            var groupNumber = document.GetElement(airterminal)
+                          .LookupParameter("ADSK_Группирование")
+                          .AsValueString();
+
+
+            if (!string.IsNullOrEmpty(groupNumber))
+            {
+                // GroupNumber уже содержит корректное значение
+            }
+            else
+            {
+                // Обработка случая отсутствия или некорректного значения
+                GroupNumber = 0; // или другое значение по умолчанию / логика обработки
+            }
             BranchNumber = customElement.MepSpace;
             customElement.Direction = "О";
            

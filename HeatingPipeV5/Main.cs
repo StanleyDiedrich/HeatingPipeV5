@@ -17,6 +17,7 @@ using System.Windows.Forms;
 using System.Xml.Linq;
 using Autodesk.Revit.Creation;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB.Visual;
@@ -244,6 +245,16 @@ namespace HeatingPipeV5
 
 
                             SaveFile(doc, danfossElements,danfossEquipment, danfossManifolds);
+
+                           /* List<ElementId> ids = new List<ElementId>();
+                            foreach(var branch in collection.Collection)
+                            {
+                                foreach (var el in branch.Elements)
+                                {
+                                    ids.Add(el.ElementId);
+                                }
+                            }
+                            uIDocument.Selection.SetElementIds(ids);*/
                             //var content = collection.GetContent();
                             //collection.SaveFile(content);
                         }
@@ -301,7 +312,7 @@ namespace HeatingPipeV5
                         var linkedElement = filter.OfCategory(BuiltInCategory.OST_RvtLinks).WhereElementIsNotElementType().ToList();
 
                         Workset selectedWorset = mainViewModel.WorksheetList.Where(x => x.IsSelected).Select(x => x.Workset).First();
-
+                        
                         foreach (var model in selectedModel)
                         {
                             foreach (var linkmodel in linkedElement)
@@ -335,9 +346,31 @@ namespace HeatingPipeV5
                         .OfClass(typeof(Phase))
                         .Cast<Phase>()
                         .FirstOrDefault();
+                        var view = doc.ActiveView;
+                        Plane plane = Plane.CreateByNormalAndOrigin(view.ViewDirection, doc.ActiveView.Origin);
+                        
                         foreach (var copiedSpace in copiedSpaces)
                         {
-
+                            if (copiedSpace.BoundarySegments.Count!=0)
+                            {
+                                using (Transaction r = new Transaction(doc,"DrawBoundary"))
+                                {
+                                    r.Start();
+                                    SketchPlane sketchPlane = SketchPlane.Create(doc, plane);
+                                    try
+                                    {
+                                        foreach(var boundary in copiedSpace.BoundarySegments)
+                                        {
+                                            
+                                            createDoc.NewSpaceBoundaryLines(sketchPlane, boundary, view);
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        r.RollBack();
+                                    }
+                                }
+                            }
                             using (Transaction t = new Transaction(doc,"CreateSpace"))
                             {
                                 t.Start();
@@ -362,6 +395,99 @@ namespace HeatingPipeV5
 
                         break;
                 }
+
+
+                case Regime.COPY_LINKED_ROOM:
+                    {
+                        List<Element> mep_rooms = new List<Element>();
+                        var selectedModel = mainViewModel.ModelsList.Where(x => x.IsSelected).Select(x => x.ModelName).ToList();
+                        FilteredElementCollector filter = new FilteredElementCollector(doc);
+                        var linkedElement = filter.OfCategory(BuiltInCategory.OST_RvtLinks).WhereElementIsNotElementType().ToList();
+
+                        Workset selectedWorset = mainViewModel.WorksheetList.Where(x => x.IsSelected).Select(x => x.Workset).First();
+
+                        foreach (var model in selectedModel)
+                        {
+                            foreach (var linkmodel in linkedElement)
+                            {
+                                if (linkmodel.Name.Equals(model))
+                                {
+                                    FilteredElementCollector filter1 = new FilteredElementCollector(linkmodel.Document);
+                                    var activedocument = (doc.GetElement(linkmodel.Id) as RevitLinkInstance).GetLinkDocument();
+                                    FilteredElementCollector linkedFilter = new FilteredElementCollector(activedocument);
+                                    mep_rooms = linkedFilter.OfCategory(BuiltInCategory.OST_Rooms).WhereElementIsNotElementType().ToList();
+
+                                }
+                            }
+                        }
+                        List<CustomRoom> copiedSpaces = new List<CustomRoom>();
+                        foreach (var mepRoom in mep_rooms)
+                        {
+                            if (mepRoom != null)
+                            {
+                                CustomRoom customSpace = new CustomRoom(doc, mepRoom);
+                                if (customSpace.Location != null || customSpace.Name != null || customSpace.Temperature != null || customSpace.HeatLoading != null || customSpace.Level != null)
+                                {
+                                    copiedSpaces.Add(customSpace);
+                                }
+
+                            }
+
+                        }
+
+                        Phase targetPhase = new FilteredElementCollector(doc)
+                        .OfClass(typeof(Phase))
+                        .Cast<Phase>()
+                        .FirstOrDefault();
+                        var view = doc.ActiveView;
+                        Plane plane = Plane.CreateByNormalAndOrigin(view.ViewDirection, doc.ActiveView.Origin);
+
+                        foreach (var copiedSpace in copiedSpaces)
+                        {
+                            if (copiedSpace.BoundarySegments.Count != 0)
+                            {
+                                using (Transaction r = new Transaction(doc, "DrawBoundary"))
+                                {
+                                    r.Start();
+                                    SketchPlane sketchPlane = SketchPlane.Create(doc, plane);
+                                    try
+                                    {
+                                        foreach (var boundary in copiedSpace.BoundarySegments)
+                                        {
+
+                                            createDoc.NewRoomBoundaryLines(sketchPlane, boundary, view);
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        r.RollBack();
+                                    }
+                                }
+                            }
+                            using (Transaction t = new Transaction(doc, "CreateSpace"))
+                            {
+                                t.Start();
+                                try
+                                {
+                                    Room newSpace = createDoc.NewRoom(copiedSpace.Level, copiedSpace.Location);
+
+                                    /*newSpace.get_Parameter(BuiltInParameter.ROOM_NAME).Set(copiedSpace.Name);
+                                    newSpace.LookupParameter("ADSK_Номер квартиры").Set(copiedSpace.Number);
+                                    newSpace.LookupParameter("ADSK_Температура в помещении").Set(copiedSpace.Temperature);
+                                    newSpace.get_Parameter(BuiltInParameter.ROOM_DESIGN_HEATING_LOAD_PARAM).Set(copiedSpace.HeatLoading);*/
+                                    t.Commit();
+                                }
+                                catch
+                                {
+                                    t.RollBack();
+                                }
+                            }
+                        }
+
+
+
+                        break;
+                    }
                 default:
                     // необязательная обработка по умолчанию
                     break;
@@ -721,7 +847,7 @@ namespace HeatingPipeV5
             var terminals = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_MechanicalEquipment).WhereElementIsNotElementType().ToElementIds().ToList();
             foreach (var terminal in terminals)
             {
-                if (terminal.IntegerValue == 5982031)
+                if (terminal.IntegerValue == 2373360)
                 {
                     var airterminal2 = terminal;
                 }
