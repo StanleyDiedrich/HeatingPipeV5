@@ -404,7 +404,7 @@ namespace HeatingPipeV5
                         FilteredElementCollector filter = new FilteredElementCollector(doc);
                         var linkedElement = filter.OfCategory(BuiltInCategory.OST_RvtLinks).WhereElementIsNotElementType().ToList();
 
-                        Workset selectedWorset = mainViewModel.WorksheetList.Where(x => x.IsSelected).Select(x => x.Workset).First();
+                        //Workset selectedWorset = mainViewModel.WorksheetList.Where(x => x.IsSelected).Select(x => x.Workset).First();
 
                         foreach (var model in selectedModel)
                         {
@@ -426,7 +426,7 @@ namespace HeatingPipeV5
                             if (mepRoom != null)
                             {
                                 CustomRoom customSpace = new CustomRoom(doc, mepRoom);
-                                if (customSpace.Location != null || customSpace.Name != null || customSpace.Temperature != null || customSpace.HeatLoading != null || customSpace.Level != null)
+                                if (customSpace.Location != null || customSpace.Name != null ||  customSpace.Level != null)
                                 {
                                     copiedSpaces.Add(customSpace);
                                 }
@@ -441,13 +441,17 @@ namespace HeatingPipeV5
                         .FirstOrDefault();
                         var view = doc.ActiveView;
                         Plane plane = Plane.CreateByNormalAndOrigin(view.ViewDirection, doc.ActiveView.Origin);
-
+                       
+                       
                         foreach (var copiedSpace in copiedSpaces)
                         {
                             if (copiedSpace.BoundarySegments.Count != 0)
                             {
                                 using (Transaction r = new Transaction(doc, "DrawBoundary"))
                                 {
+                                    XYZ vectorX = new XYZ(1, 0, 0);
+                                    XYZ vectorY = new XYZ(0, 1, 0);
+                                    //Plane plane = Plane.CreateByOriginAndBasis(copiedSpace.Origin, vectorX, vectorY);
                                     r.Start();
                                     SketchPlane sketchPlane = SketchPlane.Create(doc, plane);
                                     try
@@ -464,20 +468,20 @@ namespace HeatingPipeV5
                                     }
                                 }
                             }
-                            using (Transaction t = new Transaction(doc, "CreateSpace"))
+                            using (Transaction t = new Transaction(doc, "CreateRoom"))
                             {
                                 t.Start();
                                 try
                                 {
+                                    
                                     Room newSpace = createDoc.NewRoom(copiedSpace.Level, copiedSpace.Location);
 
-                                    /*newSpace.get_Parameter(BuiltInParameter.ROOM_NAME).Set(copiedSpace.Name);
+                                    newSpace.LookupParameter("ADSK_Наименование квартиры").Set(copiedSpace.Name);
                                     newSpace.LookupParameter("ADSK_Номер квартиры").Set(copiedSpace.Number);
-                                    newSpace.LookupParameter("ADSK_Температура в помещении").Set(copiedSpace.Temperature);
-                                    newSpace.get_Parameter(BuiltInParameter.ROOM_DESIGN_HEATING_LOAD_PARAM).Set(copiedSpace.HeatLoading);*/
+                                    
                                     t.Commit();
                                 }
-                                catch
+                                 catch
                                 {
                                     t.RollBack();
                                 }

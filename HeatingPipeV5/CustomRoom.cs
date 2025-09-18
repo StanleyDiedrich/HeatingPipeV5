@@ -19,7 +19,7 @@ namespace HeatingPipeV5
         public string Temperature { get; set; }
         public Solid CSolid { get; set; }
         public List<CurveArray> BoundarySegments { get; set; } = new List<CurveArray>();
-
+        public XYZ Origin { get; set; }
 
         public CustomRoom(Autodesk.Revit.DB.Document doc, Element element)
         {
@@ -27,12 +27,17 @@ namespace HeatingPipeV5
             try
             {
                 Element = element;
-                Level = doc.GetElement(element.LevelId) as Level;
-                Name = element.get_Parameter(BuiltInParameter.ROOM_NAME).AsValueString();
+                var levelName = (element as SpatialElement).Level.Name;
+                Level = new FilteredElementCollector(doc).OfClass(typeof(Level)).Cast<Level>().FirstOrDefault(l => l.Name.Contains(levelName));
+
+
+
+                //Level = (element as SpatialElement).Level;
+                Name = element.LookupParameter("ADSK_Наименование квартиры").AsValueString();
                 Number = element.LookupParameter("ADSK_Номер квартиры").AsValueString();
-                HeatLoading = element.get_Parameter(BuiltInParameter.ROOM_DESIGN_HEATING_LOAD_PARAM).AsValueString().Split()[0];
-                Temperature = element.LookupParameter("ADSK_Температура в помещении").AsValueString().Split()[0];
+                
                 XYZ center = ((element.Location) as LocationPoint).Point;
+                Origin = new XYZ(center.X, center.Y, center.Z);
                 Location = new UV(center.X, center.Y);
                 SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions();
                 var segments = (element as SpatialElement).GetBoundarySegments(opt);
@@ -42,7 +47,7 @@ namespace HeatingPipeV5
                     foreach (BoundarySegment seg in segment)
                     {
                         Curve c = seg.GetCurve();
-                        if (c != null)
+                        if (c != null || c.Length>0.1)
                         {
                             curveArray.Append(c);
                         }

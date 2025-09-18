@@ -247,10 +247,17 @@ namespace HeatingPipeV5
             Window.Close();
             
         }
+        public void CopyRoom(object param)
+        {
+            var selectedModel = ModelsList.Where(x => x.IsSelected).Select(x => x.ModelName).ToList();
+            StartFunction = Regime.COPY_LINKED_ROOM;
+            Window.Close();
+        }
 
         public ICommand NumberMepEquipmentCommand { get; }
         public ICommand ChangePipeSystemCommand { get; }
         public ICommand CopyMepSpaceCommand { get; }
+        public ICommand CopyRoomCommand { get; }
         public void NumberMepEquipment(object param)
         {
             StartFunction = Regime.MEP_HEATING_COLLECTION;
@@ -369,7 +376,7 @@ namespace HeatingPipeV5
             NumberMepEquipmentCommand = new RelayCommand(NumberMepEquipment);
             ChangePipeSystemCommand = new RelayCommand(ChangePipeSystem);
             CopyMepSpaceCommand = new RelayCommand(CopyMepSpace);
-
+            CopyRoomCommand = new RelayCommand(CopyRoom);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

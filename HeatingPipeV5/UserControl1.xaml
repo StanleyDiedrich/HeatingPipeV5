@@ -103,7 +103,8 @@
             </ListBox>
 
             <Button Content="Копировать пространства" Command="{Binding CopyMepSpaceCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
-            
+            <Button Content="Копировать помещения" Command="{Binding CopyRoomCommand}" Margin="0,10,0,0" Width="400" Background="#5B9BD5" Foreground="White" Padding="10"/>
+
         </StackPanel>
     </Grid>
 
