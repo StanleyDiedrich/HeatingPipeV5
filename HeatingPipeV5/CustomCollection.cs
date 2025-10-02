@@ -1136,7 +1136,8 @@ namespace HeatingPipeV5
                 CustomBranch customBranch = new CustomBranch(Document);
                 foreach (var element in branch.Elements)
                 {
-                    if (element.BranchMark.Contains("П"))
+                    if (branch.Direction.Equals("П"))
+                      // if (element.BranchMark.Contains("П"))
                     {
                         customBranch.Elements.Add(element);
                     }    
@@ -1155,7 +1156,8 @@ namespace HeatingPipeV5
                 CustomBranch customBranch = new CustomBranch(Document);
                 foreach (var element in branch.Elements)
                 {
-                    if (element.BranchMark.Contains("О"))
+                    if (branch.Direction.Equals("О"))
+                   // if (element.BranchMark.Contains("О"))
                     {
                         customBranch.Elements.Add(element);
                     }

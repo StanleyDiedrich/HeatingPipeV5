@@ -128,6 +128,7 @@ namespace HeatingPipeV5
             if (!string.IsNullOrEmpty(groupNumber))
             {
                 // GroupNumber уже содержит корректное значение
+                GroupNumber = Convert.ToInt32(groupNumber);
             }
             else
             {
@@ -141,11 +142,11 @@ namespace HeatingPipeV5
             //customElement.BranchMark = BranchNumber + "_" + customElement.Direction + "_" + Number.ToString();
             if (GroupNumber==0)
             {
-                customElement.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+                customElement.BranchMark = customElement.MepSpace + /*"_" + customElement.Direction +*/ "-" + Number.ToString();
             }
             else
             {
-                customElement.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+                customElement.BranchMark = customElement.MepSpace + /*"_" + customElement.Direction +*/ "-" + GroupNumber.ToString();
             }
             customElement.MiniLoopNumber = MiniLoopNumber;
 
@@ -171,11 +172,11 @@ namespace HeatingPipeV5
             //customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
             if (GroupNumber == 0)
             {
-                customElementSup.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+                customElementSup.BranchMark = customElement.MepSpace + "-" + customElement.Direction + "-" + Number.ToString();
             }
             else
             {
-                customElementSup.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+                customElementSup.BranchMark = customElement.MepSpace + "-" + customElement.Direction + "-" + GroupNumber.ToString();
             }
             customElementSup.MiniLoopNumber = MiniLoopNumber;
             do
@@ -194,11 +195,11 @@ namespace HeatingPipeV5
                 //customElementSup.BranchMark = customElement.MepSpace + "_" + customElementSup.Direction + "_" + Number.ToString();
                 if (GroupNumber == 0)
                 {
-                    customElementSup.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+                    customElementSup.BranchMark = customElement.MepSpace + "-" + customElement.Direction + "-" + Number.ToString();
                 }
                 else
                 {
-                    customElementSup.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+                    customElementSup.BranchMark = customElement.MepSpace + "-" + customElement.Direction + "-" + GroupNumber.ToString();
                 }
                 customElementSup.MiniLoopNumber = MiniLoopNumber;
             }
@@ -254,7 +255,7 @@ namespace HeatingPipeV5
             BranchNumber = customElement.MepSpace;
             customElement.Direction = "О";
            
-                customElement.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+                customElement.BranchMark = customElement.MepSpace + /*"_" + customElement.Direction*/  "-" + Number.ToString();
             //customElement.BranchMark = BranchNumber + "_" + customElement.Direction + "_" + Number.ToString();
             customElement.MiniLoopNumber = MiniLoopNumber;
 
@@ -273,11 +274,11 @@ namespace HeatingPipeV5
             //customElementRet.BranchMark = customElement.MepSpace + "_" + customElementRet.Direction + "_" + Number.ToString();
             if (GroupNumber == 0)
             {
-                customElementRet.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+                customElementRet.BranchMark = customElement.MepSpace + "-" + customElement.Direction + "-" + Number.ToString();
             }
             else
             {
-                customElementRet.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+                customElementRet.BranchMark = customElement.MepSpace + "-" + customElement.Direction + "-" + GroupNumber.ToString();
             }
             customElementRet.MiniLoopNumber = MiniLoopNumber;
             do
@@ -302,11 +303,11 @@ namespace HeatingPipeV5
                 //customElementRet.BranchMark = customElement.MepSpace + "_" + customElementRet.Direction + "_" + Number.ToString();
                 if (GroupNumber == 0)
                 {
-                    customElementRet.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + Number.ToString();
+                    customElementRet.BranchMark = customElement.MepSpace + "-" + customElement.Direction + "-" + Number.ToString();
                 }
                 else
                 {
-                    customElementRet.BranchMark = customElement.MepSpace + "_" + customElement.Direction + "_" + GroupNumber.ToString();
+                    customElementRet.BranchMark = customElement.MepSpace + "-" + customElement.Direction + "-" + GroupNumber.ToString();
                 }
                 customElementRet.MiniLoopNumber = MiniLoopNumber;
             }
