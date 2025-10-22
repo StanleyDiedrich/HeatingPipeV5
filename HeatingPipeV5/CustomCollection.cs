@@ -912,7 +912,29 @@ namespace HeatingPipeV5
 
             return result;
         }
+        internal List<DanfossPipe> GetDanfossPipes()
+        {
+            var result = new List<DanfossPipe>();
 
+            foreach (var branch in Collection)
+            {
+                // Берём только трубы в этой ветке
+                var pipes = branch.Elements
+                                  .Where(x => x.DetailType == CustomElement.Detail.Pipe);
+
+               
+
+                foreach (var pipe in pipes)
+                {
+
+                    var danfossPipe = new DanfossPipe(pipe);
+                   
+                    result.Add(danfossPipe);
+                }
+            }
+
+            return result;
+        }
         public List<DanfossEquipment> GetDanfossEquipment()
         {
             var result = new List<DanfossEquipment>();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 
 namespace HeatingPipeV5
 {
@@ -64,7 +65,14 @@ namespace HeatingPipeV5
             Length = Math.Round(len,2).ToString();
             Comment = $"{list.First().BranchMark}-{list.First().TrackNumber}";
         }
-
+        public DanfossPipe(CustomElement pipe)
+        {
+            Ids = pipe.ElementId.ToString();
+            DiameterNominal = pipe.DiameterNominal;
+            double len = pipe.Lenght;
+            Length = Math.Round(len, 2).ToString();
+            Comment = $"{pipe.BranchMark}-{pipe.TrackNumber}";
+        }
     }
 }
 

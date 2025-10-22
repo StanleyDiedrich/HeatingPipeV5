@@ -206,7 +206,7 @@ namespace HeatingPipeV5
             while (nextElement != null);
             BranchNumber = Number.ToString();
             BranchMark= BranchNumber + "_" + customElement.Direction + "_" + Number.ToString();
-            //_counter++;
+            _counter++;
         }
 
         public static List<CustomBranch> UpDown(List<CustomBranch> branch)

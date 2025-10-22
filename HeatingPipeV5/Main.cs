@@ -238,13 +238,14 @@ namespace HeatingPipeV5
 
                             // это надо
                             List<DanfossPipe> danfossElements = collection.GetDanfossElements();
+                            List<DanfossPipe> danfossPipe = collection.GetDanfossPipes();
                             List<DanfossEquipment> danfossEquipment = collection.GetDanfossEquipment();
                             List<DanfossManifold> danfossManifolds = collection.GetDanfossManifolds();
                             //это надо
 
 
 
-                            SaveFile(doc, danfossElements,danfossEquipment, danfossManifolds);
+                            SaveFile(doc, danfossElements,danfossEquipment, danfossManifolds, danfossPipe);
 
                            /* List<ElementId> ids = new List<ElementId>();
                             foreach(var branch in collection.Collection)
@@ -613,7 +614,7 @@ namespace HeatingPipeV5
         }
 
 
-        private void SaveFile(Autodesk.Revit.DB.Document doc, List<DanfossPipe> danfossPipes , List<DanfossEquipment> danfossEquipment, List<DanfossManifold> danfossManifolds)
+        private void SaveFile(Autodesk.Revit.DB.Document doc, List<DanfossPipe> danfossPipes , List<DanfossEquipment> danfossEquipment, List<DanfossManifold> danfossManifolds, List<DanfossPipe> danfossPipe)
         {
             if (danfossPipes == null || danfossPipes.Count == 0) return;
 
@@ -699,15 +700,7 @@ namespace HeatingPipeV5
                         worksheet.Cells[row, 20].Value = r.Description;     // Описание (расширенное)
                         worksheet.Cells[row, 21].Value = r.Onach;          // Отнач
                         worksheet.Cells[row, 22].Value = r.Okonech;            // Откон
-                       /* foreach(var elbow in danfossElbows)
-                        {
-                            if(elbow.Mark.Equals(r.Comment))
-                            {
-                                var elbows = danfossElbows.GroupBy(x => x.Mark).Select(x => x).Max(x => x.Count());
-                                worksheet.Cells[row, 23].Value = elbow.Count;
-                            }
-                            break;
-                        }*/
+                      
 
 
 
@@ -808,6 +801,70 @@ namespace HeatingPipeV5
                         worksheet_man.Cells[row, 13].Value = r.Comment;
                         worksheet_man.Cells[row, 14].Value = r.Manufacturer;
                         worksheet_man.Cells[row, 15].Value = r.Description;
+                    }
+
+                    var worksheet_pipe = package.Workbook.Worksheets.Add("Трубы элементами");
+                    for (int c = 1; c <= 22; c++) worksheet_pipe.Column(c).Width = 15;
+                    worksheet_pipe.Column(1).Width = 20;
+                    worksheet_pipe.Column(2).Width = 60;
+
+                    worksheet_pipe.Cells[1, 1].Value = "Id";
+                    worksheet_pipe.Cells[1, 2].Value = "Тип";
+                    worksheet_pipe.Cells[1, 3].Value = "Труба";
+                    worksheet_pipe.Cells[1, 4].Value = "Тип трубы";
+                    worksheet_pipe.Cells[1, 5].Value = "Стояк";
+                    worksheet_pipe.Cells[1, 6].Value = "Участок";
+                    worksheet_pipe.Cells[1, 7].Value = "Dn";
+                    worksheet_pipe.Cells[1, 8].Value = "Изоляция";
+                    worksheet_pipe.Cells[1, 9].Value = "Тизо";
+                    worksheet_pipe.Cells[1, 10].Value = "Длина";
+
+
+                    worksheet_pipe.Cells[1, 11].Value = "Ост";
+                    worksheet_pipe.Cells[1, 12].Value = "Уровень";
+                    worksheet_pipe.Cells[1, 13].Value = "Помещение";
+
+                    worksheet_pipe.Cells[1, 14].Value = "Отв";
+                    worksheet_pipe.Cells[1, 15].Value = "О/д";
+                    worksheet_pipe.Cells[1, 16].Value = "Сос";
+
+                    worksheet_pipe.Cells[1, 17].Value = "Комментарии";
+                    worksheet_pipe.Cells[1, 18].Value = "Символ";
+                    worksheet_pipe.Cells[1, 19].Value = "Производитель";
+                    worksheet_pipe.Cells[1, 20].Value = "Описание";
+                    worksheet_pipe.Cells[1, 21].Value = "Отнач";
+                    worksheet_pipe.Cells[1, 22].Value = "Откон";
+
+                    for (int i = 0; i < danfossPipe.Count; i++)
+                    {
+                        var r = danfossPipe[i];
+                        int row = i + 2;
+                        worksheet_pipe.Cells[row, 1].Value = r.Ids;
+                        worksheet_pipe.Cells[row, 2].Value = r.HeatingSystem;        // Тип
+                        worksheet_pipe.Cells[row, 3].Value = r.Type;                 // Труба
+                        worksheet_pipe.Cells[row, 4].Value = r.PipeType;             // Стояк
+                        worksheet_pipe.Cells[row, 5].Value = r.Riser;                // Участок
+                        worksheet_pipe.Cells[row, 6].Value = r.Part;                 // Dn
+                        worksheet_pipe.Cells[row, 7].Value = r.DiameterNominal;      // Изоляция (если поменять местами — проверьте соответствие)
+                        worksheet_pipe.Cells[row, 8].Value = r.Insulation;           // Тизо
+                        worksheet_pipe.Cells[row, 9].Value = r.InsulationThick;      // Plc
+                        worksheet_pipe.Cells[row, 10].Value = r.Length;                // L
+
+                        worksheet_pipe.Cells[row, 11].Value = r.Ost;         // Ост
+                        worksheet_pipe.Cells[row, 12].Value = r.Lvl;             // Уровень
+                        worksheet_pipe.Cells[row, 13].Value = r.Room;                // Помещение
+
+                        worksheet_pipe.Cells[row, 14].Value = r.Otv;               // Отв
+                        worksheet_pipe.Cells[row, 15].Value = r.Od;          // О/д
+                        worksheet_pipe.Cells[row, 16].Value = r.Sos;          // Сос
+
+                        worksheet_pipe.Cells[row, 17].Value = r.Comment;               // Комментарии
+                        worksheet_pipe.Cells[row, 18].Value = r.Symbol;              // Символ
+                        worksheet_pipe.Cells[row, 19].Value = r.Manufacturer;        // Производитель
+                        worksheet_pipe.Cells[row, 20].Value = r.Description;     // Описание (расширенное)
+                        worksheet_pipe.Cells[row, 21].Value = r.Onach;          // Отнач
+                        worksheet_pipe.Cells[row, 22].Value = r.Okonech;            // Откон
+
                     }
 
 
